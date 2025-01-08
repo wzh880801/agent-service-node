@@ -29,7 +29,7 @@ export APP_SECRET=LOplEasQrxvmWDiqa************
 // 使用长连接接收开放平台事件，转存到 bull 队列
 node ./platform/ws.js
 
-// 消费队列，处理指标事件
+// 消费队列，处理指标事件并暴露一个 /metrics endpoint 供 Prometheus server 爬取数据
 node ./platform/job-handler.js
 
 // 可选，队列的管理面板
