@@ -1,0 +1,55 @@
+# networks:
+#   apaas-ob-network:
+#     # external: true
+#     driver: bridge
+#     ipam:
+#       driver: default
+#       config:
+#         - subnet: 172.18.10.0/16
+#           gateway: 172.18.10.1
+
+services:
+
+  # redis 服务
+  # 如果使用已有的 redis，可将此部分注释掉
+  # 如果要修改对应 redis conf，请修改 ./redis/conf/redis.conf
+  # redis:
+  #   image: redis:7.4.1
+  #   container_name: redis
+  #   ports:
+  #     - 127.0.0.1:6379:6379
+  #   networks:
+  #     apaas-ob-network:
+  #       ipv4_address: 172.18.10.6
+  #   volumes:
+  #     - ./redis/data:/data
+  #     - ./redis/conf/redis.conf:/etc/redis/redis.conf
+  #     - ./redis/logs:/logs
+  #   command:
+  #     - /etc/redis/redis.conf
+  #   entrypoint: /usr/local/bin/redis-server
+  #   environment:
+  #     PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  #   restart: always
+
+  agent-service-node:
+    image: galaxy/agent-service-node:latest
+    container_name: agent-service-node
+    network_mode: host
+    #   networks:
+    #     apaas-ob-network:
+    #       ipv4_address: 172.18.10.10
+    environment:
+      - METRICS_HTTP_PORT=33444
+      # - LOKI_API_URL=
+      # - LOKI_API_KEY=
+      - BULL_BOARD_PORT=44445
+      - REDIS_CONN_URL=redis://127.0.0.1:6379/15
+      - APP_ID=cli_a59a471e0a7fd00d
+      - APP_SECRET=LOplEasQrxvmWDiqa************
+    volumes:
+      - ./logs:/var/logs/agent-service-node
+    # ports:
+    #   - 33444:33444
+    #   - 44445:44445
+    restart: unless-stopped
