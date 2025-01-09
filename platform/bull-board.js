@@ -5,13 +5,16 @@ const { BullAdapter } = require("@bull-board/api/bullAdapter");
 const { ExpressAdapter } = require("@bull-board/express");
 const cfg = require('./config');
 
-const myWebhookQueue = new Queue(cfg.queue_name, { redis: cfg.redis });
+const myQueue = new Queue(cfg.queue_name, { redis: cfg.redis });
+myQueue.on('error', err => {
+    console.log(`[bull-board]bull queue error`, err);
+})
 
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
 const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
-    queues: [new BullAdapter(myWebhookQueue)],
+    queues: [new BullAdapter(myQueue)],
     serverAdapter: serverAdapter,
 });
 

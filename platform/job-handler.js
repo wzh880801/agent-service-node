@@ -7,6 +7,10 @@ const logger = require('../log/log_helper_v2').default().useFile(__filename).use
 const myQueue = new Queue(cfg.queue_name, {
     redis: cfg.redis
 });
+myQueue.on('error', err => {
+    console.log(`[job-handler]bull queue error`, err);
+})
+
 const { processMetrics } = require('../metrics/metric-process');
 const { metrics } = require('../metrics/index');
 

@@ -7,6 +7,9 @@ const cfg = require('./config');
 const myQueue = new Queue(cfg.queue_name, {
     redis: cfg.redis
 });
+myQueue.on('error', err => {
+    console.log(`[ws]bull queue error`, err);
+})
 
 const { APP_ID, APP_SECRET } = process.env;
 
