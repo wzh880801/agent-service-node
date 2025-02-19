@@ -64,6 +64,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.get('/metrics', async (req, res) => {
 
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     if (IS_DUAL_APP_MODE) {
         res.send('Service running in DUAL_APP_MODE, endpoint not invaliad. Please use /:app_id/metrics instead.');
         return;
@@ -74,7 +75,6 @@ app.get('/metrics', async (req, res) => {
     const ua = req.headers['user-agent'];
     const is_prom_scrape = ua && ua.toLowerCase().indexOf('prometheus') !== -1;
 
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     const metrics_string = await client.register.metrics();
 
     const cost = new Date().getTime() - start;
@@ -91,12 +91,13 @@ app.get('/metrics', async (req, res) => {
 
 app.get('/agent/metrics', async (req, res) => {
 
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+
     if (!IS_DUAL_APP_MODE) {
         res.send('This endpoint is only valid in DUAL_APP_MODE.');
         return;
     }
 
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     const metrics_string = await agent_metric_registry.metrics();
 
     res.send(metrics_string);
@@ -104,6 +105,8 @@ app.get('/agent/metrics', async (req, res) => {
 })
 
 app.get('/:app_id/metrics', async (req, res) => {
+
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
 
     if (!IS_DUAL_APP_MODE) {
         res.send('Service running in SINGLE_APP_MODE, endpoint not invaliad. Please use /metrics instead.');
@@ -123,7 +126,6 @@ app.get('/:app_id/metrics', async (req, res) => {
     const ua = req.headers['user-agent'];
     const is_prom_scrape = ua && ua.toLowerCase().indexOf('prometheus') !== -1;
 
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     const metrics_string = await registry.metrics();
 
     const cost = new Date().getTime() - start;
