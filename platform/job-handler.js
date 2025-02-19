@@ -15,6 +15,8 @@ myQueue.on('error', err => {
 
 const { processMetrics } = IS_DUAL_APP_MODE ? require('../dual-metrics/metric-process') : require('../metrics/metric-process');
 
+logger.info(`MODE=${IS_DUAL_APP_MODE ? 'DUAL_APP_MODE' : 'SINGLE_APP_MODE'}`);
+
 // 增加队列的处理逻辑
 myQueue.process('apaas_metrics', async (job, done) => {
 
@@ -28,7 +30,7 @@ myQueue.process('apaas_metrics', async (job, done) => {
     await job.progress(10);
 
     try {
-        const resp = await processMetrics(body, body.__trace_id);
+        const resp = await processMetrics(body.metrics, body.__trace_id);
 
         await job.progress(100);
 

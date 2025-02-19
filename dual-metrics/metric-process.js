@@ -25,20 +25,22 @@ function getMetricObject(app_id, metric) {
 
 /**
  * 
- * @param {import('../data').IBaseMetricReceivedEvent} event 
+ * @param {Array<import('../data').IBaseMetric>} metrics 
  * @param {string} __trace_id 
  */
-async function processMetrics(event, __trace_id) {
+async function processMetrics(metrics, __trace_id) {
 
     const _logger = logger.default().new();
     if (__trace_id) {
         _logger.useTraceId(__trace_id);
     }
 
-    const app_id = event.app_id;
-    const metrics = event.metrics;
-
     for (const m of metrics) {
+        if (!m.attributes || !m.attributes.tenant_id || !m.attributes.namespace) {
+            _logger.error(`tenant_id & namespace attributes are lost`);
+            continue;
+        }
+        const app_id = `${m.attributes.tenant_id}_${m.attributes.namespace}`;
         const app_metric = getMetricObject(app_id, m);
         if (!app_metric) {
             _logger.warn(`[${app_id}] UnSupported metric=[${m.name}] type=[${m.type}]`);

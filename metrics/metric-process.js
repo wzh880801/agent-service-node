@@ -19,17 +19,15 @@ function getMetricObject(metric) {
 
 /**
  * 
- * @param {import('../data').IBaseMetricReceivedEvent} event 
+ * @param {Array<import('../data').IBaseMetric>} metrics 
  * @param {string} __trace_id 
  */
-async function processMetrics(event, __trace_id) {
+async function processMetrics(metrics, __trace_id) {
 
     const _logger = logger.default().new();
     if (__trace_id) {
         _logger.useTraceId(__trace_id);
     }
-
-    const metrics = event.metrics;
 
     for (const m of metrics) {
         const app_metric = getMetricObject(m);
