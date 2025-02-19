@@ -89,6 +89,20 @@ app.get('/metrics', async (req, res) => {
     res.end();
 })
 
+app.get('/agent/metrics', async (req, res) => {
+
+    if (!IS_DUAL_APP_MODE) {
+        res.send('This endpoint is only valid in DUAL_APP_MODE.');
+        return;
+    }
+
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    const metrics_string = await agent_metric_registry.metrics();
+
+    res.send(metrics_string);
+    res.end();
+})
+
 app.get('/:app_id/metrics', async (req, res) => {
 
     if (!IS_DUAL_APP_MODE) {
@@ -119,20 +133,6 @@ app.get('/:app_id/metrics', async (req, res) => {
         agent_metrics.agent_request_duration_milliseconds_total.inc(cost);
         agent_metrics.agent_response_size_total.inc(metrics_string.length);
     }
-
-    res.send(metrics_string);
-    res.end();
-})
-
-app.get('/agent/metrics', async (req, res) => {
-
-    if (!IS_DUAL_APP_MODE) {
-        res.send('This endpoint is only valid in DUAL_APP_MODE.');
-        return;
-    }
-
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    const metrics_string = await agent_metric_registry.metrics();
 
     res.send(metrics_string);
     res.end();
