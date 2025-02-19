@@ -1,5 +1,5 @@
 const {
-    metrics
+    getAppMetrics
 } = require('./index');
 const linq = require('linq');
 
@@ -7,10 +7,16 @@ const logger = require('../log/log_helper_v2').default().useFile(__filename).use
 
 /**
  * 
+ * @param {string} app_id 
  * @param {import('../data').IBaseMetric} metric 
  * @returns {import('prom-client').MetricObject | undefined}
  */
-function getMetricObject(metric) {
+function getMetricObject(app_id, metric) {
+    const metrics = getAppMetrics(app_id);
+    if (!metrics) {
+        throw new Error(`can not find the metric defination for ${app_id}`);
+    }
+
     const name = linq.from(Object.keys(metrics)).firstOrDefault(x => x === metric.name);
     if (name) {
         return metrics[name];
@@ -29,12 +35,13 @@ async function processMetrics(event, __trace_id) {
         _logger.useTraceId(__trace_id);
     }
 
+    const app_id = event.app_id;
     const metrics = event.metrics;
 
     for (const m of metrics) {
-        const app_metric = getMetricObject(m);
+        const app_metric = getMetricObject(app_id, m);
         if (!app_metric) {
-            _logger.warn(`UnSupported metric=[${m.name}] type=[${m.type}]`);
+            _logger.warn(`[${app_id}] UnSupported metric=[${m.name}] type=[${m.type}]`);
             continue;
         }
 
@@ -42,7 +49,7 @@ async function processMetrics(event, __trace_id) {
         for (const k of Object.keys(m.attributes)) {
             if (app_metric.labelNames.indexOf(k) === -1) {
 
-                _logger.warn(`UnSupported label [${k}]=[${m.attributes[k]}] for metric [${m.name}]`);
+                _logger.warn(`[${app_id}] UnSupported label [${k}]=[${m.attributes[k]}] for metric [${m.name}]`);
 
                 delete m.attributes[k];
             }

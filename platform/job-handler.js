@@ -4,6 +4,8 @@ const cfg = require('./config');
 
 const logger = require('../log/log_helper_v2').default().useFile(__filename).useSingleAppendMode();
 
+const IS_DUAL_APP_MODE = process.env['RUN_MODE'] === 'DUAL_APP_MODE' ? true : false;
+
 const myQueue = new Queue(cfg.queue_name, {
     redis: cfg.redis
 });
@@ -11,8 +13,7 @@ myQueue.on('error', err => {
     console.log(`[job-handler]bull queue error`, err);
 })
 
-const { processMetrics } = require('../metrics/metric-process');
-const { metrics } = require('../metrics/index');
+const { processMetrics } = IS_DUAL_APP_MODE ? require('../dual-metrics/metric-process') : require('../metrics/metric-process');
 
 // 增加队列的处理逻辑
 myQueue.process('apaas_metrics', async (job, done) => {
@@ -27,7 +28,7 @@ myQueue.process('apaas_metrics', async (job, done) => {
     await job.progress(10);
 
     try {
-        const resp = await processMetrics(body.metrics, body.__trace_id);
+        const resp = await processMetrics(body, body.__trace_id);
 
         await job.progress(100);
 
@@ -43,7 +44,8 @@ logger.info(`processor started.`);
 
 
 // -----------metrics-exporter-----------
-const { client } = require('../metrics/index');
+const { metrics, client } = require('../metrics/index');
+const { agent_metric_registry, getAppRegistry, agent_metrics } = require('../dual-metrics/index');
 
 /* 引入express框架 */
 const express = require('express');
@@ -60,6 +62,11 @@ app.use(express.urlencoded({ extended: false }));
 
 app.get('/metrics', async (req, res) => {
 
+    if (IS_DUAL_APP_MODE) {
+        res.send('Service running in DUAL_APP_MODE, endpoint not invaliad. Please use /:app_id/metrics instead.');
+        return;
+    }
+
     const start = new Date().getTime();
 
     const ua = req.headers['user-agent'];
@@ -75,6 +82,55 @@ app.get('/metrics', async (req, res) => {
         metrics.agent_request_duration_milliseconds_total.inc(cost);
         metrics.agent_response_size_total.inc(metrics_string.length);
     }
+
+    res.send(metrics_string);
+    res.end();
+})
+
+app.get('/:app_id/metrics', async (req, res) => {
+
+    if (!IS_DUAL_APP_MODE) {
+        res.send('Service running in SINGLE_APP_MODE, endpoint not invaliad. Please use /metrics instead.');
+        return;
+    }
+
+    const app_id = req.params.app_id;
+    if (!app_id) {
+        res.send('invaliad app_id');
+        return;
+    }
+
+    const registry = getAppRegistry(app_id);
+
+    const start = new Date().getTime();
+
+    const ua = req.headers['user-agent'];
+    const is_prom_scrape = ua && ua.toLowerCase().indexOf('prometheus') !== -1;
+
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    const metrics_string = await registry.metrics();
+
+    const cost = new Date().getTime() - start;
+
+    if (is_prom_scrape) {
+        agent_metrics.agent_request_total.inc(1);
+        agent_metrics.agent_request_duration_milliseconds_total.inc(cost);
+        agent_metrics.agent_response_size_total.inc(metrics_string.length);
+    }
+
+    res.send(metrics_string);
+    res.end();
+})
+
+app.get('/agent/metrics', async (req, res) => {
+
+    if (!IS_DUAL_APP_MODE) {
+        res.send('This endpoint is only valid in DUAL_APP_MODE.');
+        return;
+    }
+
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    const metrics_string = await agent_metric_registry.metrics();
 
     res.send(metrics_string);
     res.end();

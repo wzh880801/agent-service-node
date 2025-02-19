@@ -47,6 +47,7 @@ services:
       - REDIS_CONN_URL=redis://127.0.0.1:6379/15
       - APP_ID=cli_a59a471e0a7fd00d
       - APP_SECRET=LOplEasQrxvmWDiqa************
+      - RUN_MODE=DUAL_APP_MODE
     volumes:
       - ./logs:/var/logs/agent-service-node
     # ports:
