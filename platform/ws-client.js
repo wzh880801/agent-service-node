@@ -13,6 +13,8 @@ myQueue.on('error', err => {
 
 const { APP_ID, APP_SECRET } = process.env;
 
+logger.info(`Using app ${APP_ID} to subscribe event.`);
+
 const wsClient = new lark.WSClient({
     appId: APP_ID,
     appSecret: APP_SECRET,
