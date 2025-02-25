@@ -77,7 +77,7 @@ app.get('/metrics', async (req, res) => {
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     if (IS_DUAL_APP_MODE) {
-        res.send('Service running in DUAL_APP_MODE, endpoint not invaliad. Please use /:app_id/metrics instead.');
+        res.send('Service running in DUAL_APP_MODE, endpoint not invaliad. Please use /:tenant_id_namespace/metrics instead.');
         return;
     }
 

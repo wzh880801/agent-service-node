@@ -140,7 +140,7 @@ async function addDualAppConfig(tenant_id, namespace) {
         return;
     }
 
-    logger.info(`add config for ${tenant_id} - ${namespace}`);
+    logger.info(`adding config for ${tenant_id} - ${namespace}`);
 
     // 1. 读取 YAML 文件
     const fileContent = fs.readFileSync(PROM_CFG_FILE, 'utf8');
@@ -156,9 +156,9 @@ async function addDualAppConfig(tenant_id, namespace) {
         raw_cfgs = scrapeConfigs.toJSON();
     }
 
-    const is_alreay_exists = linq.from(raw_cfgs).firstOrDefault(x => x.job_name === new_cfg.job_name) !== null;
+    const _cfg = linq.from(raw_cfgs).firstOrDefault(x => x.job_name === new_cfg.job_name);
 
-    if (!is_alreay_exists) {
+    if (!_cfg) {
         raw_cfgs.push(new_cfg);
 
         logger.append({ ext: 'ADD_PROM_CFG' }).info({ cfg: new_cfg });
@@ -172,10 +172,10 @@ async function addDualAppConfig(tenant_id, namespace) {
         await reload_prom_cfg();
 
         logger.info(`reload prometheus configuration completed.`);
-    }
 
-    if (!linq.from(_all_cfgs).firstOrDefault(x => x.job_name === new_cfg.job_name)) {
-        _all_cfgs.push(new_cfg);
+        if (!linq.from(_all_cfgs).firstOrDefault(x => x.job_name === new_cfg.job_name)) {
+            _all_cfgs.push(new_cfg);
+        }
     }
 }
 
