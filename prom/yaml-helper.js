@@ -95,8 +95,8 @@ async function enableDualAppMode() {
 
     const new_cfgs = linq.from(raw_cfgs).where(x => x.job_name !== 'apaas').toArray();
 
-    const is_has_apaas_cfg = linq.from(raw_cfgs).firstOrDefault(x => x.job_name === 'apaas');
-    const is_has_agent_cfg = linq.from(raw_cfgs).firstOrDefault(x => x.job_name === 'agent');
+    const is_has_apaas_cfg = linq.from(raw_cfgs).count(x => x.job_name === 'apaas') > 0;
+    const is_has_agent_cfg = linq.from(raw_cfgs).count(x => x.job_name === 'agent') > 0;
     if (!is_has_agent_cfg) {
         new_cfgs.push({
             job_name: 'agent',
@@ -156,9 +156,9 @@ async function addDualAppConfig(tenant_id, namespace) {
         raw_cfgs = scrapeConfigs.toJSON();
     }
 
-    const _cfg = linq.from(raw_cfgs).firstOrDefault(x => x.job_name === new_cfg.job_name);
+    const is_cfg_exists = linq.from(raw_cfgs).count(x => x.job_name === new_cfg.job_name) > 0;
 
-    if (!_cfg) {
+    if (!is_cfg_exists) {
         raw_cfgs.push(new_cfg);
 
         logger.append({ ext: 'ADD_PROM_CFG' }).info({ cfg: new_cfg });
