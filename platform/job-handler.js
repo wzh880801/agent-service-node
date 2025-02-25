@@ -1,10 +1,23 @@
 
 const Queue = require("bull");
 const cfg = require('./config');
+const { enableDualAppMode, enableSingleAppMode } = require('../prom/yaml-helper');
 
 const logger = require('../log/log_helper_v2').default().useFile(__filename).useSingleAppendMode();
 
-const IS_DUAL_APP_MODE = process.env['RUN_MODE'] === 'DUAL_APP_MODE' ? true : false;
+const { IS_DUAL_APP_MODE } = require('../mode-cfg');
+logger.info(`MODE=${IS_DUAL_APP_MODE ? 'DUAL_APP_MODE' : 'SINGLE_APP_MODE'}`);
+
+async function init() {
+    if (IS_DUAL_APP_MODE) {
+        await enableDualAppMode();
+    }
+    else {
+        await enableSingleAppMode();
+    }
+}
+
+init();
 
 const myQueue = new Queue(cfg.queue_name, {
     redis: cfg.redis
@@ -14,8 +27,6 @@ myQueue.on('error', err => {
 })
 
 const { processMetrics } = IS_DUAL_APP_MODE ? require('../dual-metrics/metric-process') : require('../metrics/metric-process');
-
-logger.info(`MODE=${IS_DUAL_APP_MODE ? 'DUAL_APP_MODE' : 'SINGLE_APP_MODE'}`);
 
 // 增加队列的处理逻辑
 myQueue.process('apaas_metrics', async (job, done) => {

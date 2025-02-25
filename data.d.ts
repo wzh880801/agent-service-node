@@ -56,3 +56,13 @@ export interface IOApiMetricAttribute extends IBaseMetricAttribute {
     response_code: string,
     version: 'v1' | 'v2'
 }
+
+export interface IDualAppScrapeConfig {
+    job_name: string,
+    metrics_path: string,
+    static_configs: Array<IScrapeStaticConfig>,
+}
+
+export interface IScrapeStaticConfig {
+    targets: Array<string>
+}

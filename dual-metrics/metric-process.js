@@ -2,16 +2,22 @@ const {
     getAppMetrics
 } = require('./index');
 const linq = require('linq');
+const { addDualAppConfig } = require('../prom/yaml-helper');
 
 const logger = require('../log/log_helper_v2').default().useFile(__filename).useSingleAppendMode();
 
 /**
  * 
- * @param {string} app_id 
  * @param {import('../data').IBaseMetric} metric 
  * @returns {import('prom-client').MetricObject | undefined}
  */
-function getMetricObject(app_id, metric) {
+async function getMetricObject(metric) {
+    const tenant_id = metric.attributes.tenant_id;
+    const namespace = metric.attributes.namespace;
+
+    await addDualAppConfig(tenant_id, namespace);
+
+    const app_id = `${tenant_id}_${namespace}`;
     const metrics = getAppMetrics(app_id);
     if (!metrics) {
         throw new Error(`can not find the metric defination for ${app_id}`);
@@ -41,7 +47,7 @@ async function processMetrics(metrics, __trace_id) {
             continue;
         }
         const app_id = `${m.attributes.tenant_id}_${m.attributes.namespace}`;
-        const app_metric = getMetricObject(app_id, m);
+        const app_metric = await getMetricObject(m);
         if (!app_metric) {
             _logger.warn(`[${app_id}] UnSupported metric=[${m.name}] type=[${m.type}]`);
             continue;
