@@ -160,21 +160,25 @@ function getAppMetrics(app_id) {
     return app_metrics[_app_id];
 }
 
+const agent_labels = ['job_name'];
 const agent_request_total = new client.Counter({
     name: 'agent_request_total',
     help: 'total count prometheus scraped',
+    labelNames: agent_labels,
     registers: [agent_metric_registry]
 })
 
 const agent_request_duration_milliseconds_total = new client.Counter({
     name: 'agent_request_duration_milliseconds_total',
     help: 'total time cost to generate the metrics response string',
+    labelNames: agent_labels,
     registers: [agent_metric_registry]
 })
 
 const agent_response_size_total = new client.Counter({
     name: 'agent_response_size_total',
     help: 'total response size',
+    labelNames: agent_labels,
     registers: [agent_metric_registry]
 })
 

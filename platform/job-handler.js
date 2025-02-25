@@ -91,9 +91,10 @@ app.get('/metrics', async (req, res) => {
     const cost = new Date().getTime() - start;
 
     if (is_prom_scrape) {
-        metrics.agent_request_total.inc(1);
-        metrics.agent_request_duration_milliseconds_total.inc(cost);
-        metrics.agent_response_size_total.inc(metrics_string.length);
+        const label = { job_name: 'apaas' };
+        metrics.agent_request_total.labels(label).inc(1);
+        metrics.agent_request_duration_milliseconds_total.labels(label).inc(cost);
+        metrics.agent_response_size_total.labels(label).inc(metrics_string.length);
     }
 
     res.send(metrics_string);
@@ -142,9 +143,10 @@ app.get('/:app_id/metrics', async (req, res) => {
     const cost = new Date().getTime() - start;
 
     if (is_prom_scrape) {
-        agent_metrics.agent_request_total.inc(1);
-        agent_metrics.agent_request_duration_milliseconds_total.inc(cost);
-        agent_metrics.agent_response_size_total.inc(metrics_string.length);
+        const label = { job_name: app_id };
+        agent_metrics.agent_request_total.labels(label).inc(1);
+        agent_metrics.agent_request_duration_milliseconds_total.labels(label).inc(cost);
+        agent_metrics.agent_response_size_total.labels(label).inc(metrics_string.length);
     }
 
     res.send(metrics_string);

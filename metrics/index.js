@@ -182,19 +182,23 @@ const oapi_call_duration_milliseconds_summary = new client.Summary({
 //     percentiles: [0.25, 0.5, 0.9, 0.95, 0.99, 0.999]
 // });
 
+const agent_labels = ['job_name'];
 const agent_request_total = new client.Counter({
     name: 'agent_request_total',
-    help: 'total count prometheus scraped'
+    help: 'total count prometheus scraped',
+    labelNames: agent_labels
 })
 
 const agent_request_duration_milliseconds_total = new client.Counter({
     name: 'agent_request_duration_milliseconds_total',
-    help: 'total time cost to generate the metrics response string'
+    help: 'total time cost to generate the metrics response string',
+    labelNames: agent_labels
 })
 
 const agent_response_size_total = new client.Counter({
     name: 'agent_response_size_total',
-    help: 'total response size'
+    help: 'total response size',
+    labelNames: agent_labels
 })
 
 module.exports = {
