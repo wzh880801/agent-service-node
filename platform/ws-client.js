@@ -18,7 +18,8 @@ logger.info(`Using app ${APP_ID} to subscribe event.`);
 const wsClient = new lark.WSClient({
     appId: APP_ID,
     appSecret: APP_SECRET,
-    loggerLevel: lark.LoggerLevel.info
+    loggerLevel: lark.LoggerLevel.debug,
+    logger: SdkLogger
 });
 
 wsClient.start({
@@ -41,3 +42,30 @@ wsClient.start({
         }
     })
 });
+
+const SdkLogger = {
+    error: function (msg, ...args) {
+        console.error(msg, args);
+        logger.append({ ext: 'SDK' }).error({ msg, args, raw_level: 'error' });
+    },
+
+    warn: function (msg, ...args) {
+        console.warn(msg, args);
+        logger.append({ ext: 'SDK' }).warn({ msg, args, raw_level: 'warn' });
+    },
+
+    info: function (msg, ...args) {
+        console.log(msg, args);
+        logger.append({ ext: 'SDK' }).info({ msg, args, raw_level: 'info' });
+    },
+
+    debug: function (msg, ...args) {
+        console.debug(msg, args);
+        logger.append({ ext: 'SDK' }).debug({ msg, args, raw_level: 'debug' });
+    },
+
+    trace: function (msg, ...args) {
+        console.trace(msg, args);
+        logger.append({ ext: 'SDK' }).info({ msg, args, raw_level: 'trace' });
+    }
+}
