@@ -15,35 +15,7 @@ const { APP_ID, APP_SECRET } = process.env;
 
 logger.info(`Using app ${APP_ID} to subscribe event.`);
 
-const wsClient = new lark.WSClient({
-    appId: APP_ID,
-    appSecret: APP_SECRET,
-    loggerLevel: lark.LoggerLevel.debug,
-    logger: SdkLogger
-});
-
-wsClient.start({
-    eventDispatcher: new lark.EventDispatcher({}).register({
-
-        /**
-         * 开平有 3s 的处理时间限制，为了避免可能的超时，这里先将事件保存到 bull 队列，然后再异步处理
-         * @param {import('../data').IBaseMetricReceivedEvent} data 
-         */
-        'apaas.application.metric.reported_v1': async (data) => {
-
-            const _logger = logger.default().new();
-            _logger.append({ ext: 'METRIC_EVENT' }).info(data);
-
-            await myQueue.add('apaas_metrics', {
-                ...data,
-                __trace_id: _logger.getTraceid()
-            }, { removeOnComplete: { age: 3600 * 12, count: 100 } });
-
-        }
-    })
-});
-
-const SdkLogger = {
+const SDKLoggerProxy = {
     error: function (msg, ...args) {
         console.error(msg, args);
         logger.append({ ext: 'SDK' }).error({ msg, args, raw_level: 'error' });
@@ -69,3 +41,31 @@ const SdkLogger = {
         logger.append({ ext: 'SDK' }).info({ msg, args, raw_level: 'trace' });
     }
 }
+
+const wsClient = new lark.WSClient({
+    appId: APP_ID,
+    appSecret: APP_SECRET,
+    loggerLevel: lark.LoggerLevel.debug,
+    logger: SDKLoggerProxy
+});
+
+wsClient.start({
+    eventDispatcher: new lark.EventDispatcher({}).register({
+
+        /**
+         * 开平有 3s 的处理时间限制，为了避免可能的超时，这里先将事件保存到 bull 队列，然后再异步处理
+         * @param {import('../data').IBaseMetricReceivedEvent} data 
+         */
+        'apaas.application.metric.reported_v1': async (data) => {
+
+            const _logger = logger.default().new();
+            _logger.append({ ext: 'METRIC_EVENT' }).info(data);
+
+            await myQueue.add('apaas_metrics', {
+                ...data,
+                __trace_id: _logger.getTraceid()
+            }, { removeOnComplete: { age: 3600 * 12, count: 100 } });
+
+        }
+    })
+});
