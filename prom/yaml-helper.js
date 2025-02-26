@@ -10,7 +10,6 @@ const { PROM_CFG_FILE, SCRAPE_HOST_PORT, PROM_URL, IS_DUAL_APP_MODE } = require(
 
 if (IS_DUAL_APP_MODE && (!PROM_CFG_FILE || !fs.existsSync(PROM_CFG_FILE))) {
     logger.error(`PROM_CFG_FILE is invalid!`);
-    return;
 }
 
 const scrape_host = SCRAPE_HOST_PORT ? SCRAPE_HOST_PORT : `172.28.10.10:33444`;
@@ -21,6 +20,10 @@ let _all_cfgs = [];
 
 async function enableSingleAppMode() {
     logger.info(`enable SINGLE_APP_MODE`);
+
+    if (!fs.existsSync(PROM_CFG_FILE)) {
+        return;
+    }
 
     // 1. 读取 YAML 文件
     const fileContent = fs.readFileSync(PROM_CFG_FILE, 'utf8');
@@ -68,16 +71,16 @@ async function enableSingleAppMode() {
 
         fs.writeFileSync(PROM_CFG_FILE, doc.toString(), 'utf8');
 
-        logger.info(`reloading prometheus configuration...`);
-
         await reload_prom_cfg();
-
-        logger.info(`reload prometheus configuration completed.`);
     }
 }
 
 async function enableDualAppMode() {
     logger.info(`enable DUAL_APP_MODE`);
+
+    if (!fs.existsSync(PROM_CFG_FILE)) {
+        return;
+    }
 
     // 1. 读取 YAML 文件
     const fileContent = fs.readFileSync(PROM_CFG_FILE, 'utf8');
@@ -141,6 +144,10 @@ async function addDualAppConfig(tenant_id, namespace) {
     }
 
     logger.info(`adding config for ${tenant_id} - ${namespace}`);
+
+    if (!fs.existsSync(PROM_CFG_FILE)) {
+        return;
+    }
 
     // 1. 读取 YAML 文件
     const fileContent = fs.readFileSync(PROM_CFG_FILE, 'utf8');
@@ -220,10 +227,19 @@ function isDualAppCfg(cfg) {
 }
 
 async function reload_prom_cfg() {
-    return await axios({
-        method: 'POST',
-        url: prom_reload_api
-    })
+    logger.info(`reloading prometheus configuration...`);
+
+    try {
+        const resp = await axios({
+            method: 'POST',
+            url: prom_reload_api
+        });
+        logger.info(`reload prometheus configuration completed.`);
+        return resp;
+    }
+    catch (err) {
+        logger.error(`reload prometheus configuration failed. ${err}`);
+    }
 }
 
 module.exports = {
