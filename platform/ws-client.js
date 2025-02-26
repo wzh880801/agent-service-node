@@ -11,12 +11,43 @@ myQueue.on('error', err => {
     console.log(`[ws]bull queue error`, err);
 })
 
-const { APP_ID, APP_SECRET } = process.env;
+const { APP_ID, APP_SECRET, LOG_LEVEL } = process.env;
+const logLevel = LOG_LEVEL && typeof lark.LoggerLevel[LOG_LEVEL] !== 'undefined' ? lark.LoggerLevel[LOG_LEVEL] : lark.LoggerLevel.info;
+
+logger.info(`Using app ${APP_ID} to subscribe event.`);
+
+const SDKLoggerProxy = {
+    error: function (msg, ...args) {
+        console.error(msg, args);
+        logger.append({ ext: 'SDK' }).error({ msg, args, raw_level: 'error' });
+    },
+
+    warn: function (msg, ...args) {
+        console.warn(msg, args);
+        logger.append({ ext: 'SDK' }).warn({ msg, args, raw_level: 'warn' });
+    },
+
+    info: function (msg, ...args) {
+        console.log(msg, args);
+        logger.append({ ext: 'SDK' }).info({ msg, args, raw_level: 'info' });
+    },
+
+    debug: function (msg, ...args) {
+        console.debug(msg, args);
+        logger.append({ ext: 'SDK' }).debug({ msg, args, raw_level: 'debug' });
+    },
+
+    trace: function (msg, ...args) {
+        console.trace(msg, args);
+        logger.append({ ext: 'SDK' }).info({ msg, args, raw_level: 'trace' });
+    }
+}
 
 const wsClient = new lark.WSClient({
     appId: APP_ID,
     appSecret: APP_SECRET,
-    loggerLevel: lark.LoggerLevel.info
+    loggerLevel: logLevel,
+    logger: SDKLoggerProxy
 });
 
 wsClient.start({

@@ -47,8 +47,25 @@ services:
       - REDIS_CONN_URL=redis://127.0.0.1:6379/15
       - APP_ID=cli_a59a471e0a7fd00d
       - APP_SECRET=LOplEasQrxvmWDiqa************
+
+      # # 运行模式，默认 SINGLE_APP_MODE
+      # - RUN_MODE=DUAL_APP_MODE
+      # # 1. DUAL_APP_MODE 
+      # #    - 1:N 模式，比如 ISV 模式，用 1 个 app_id 订阅了多个 aPaaS 应用的观测事件，避免单个 metric endpoint 内容过多导致 prom server 爬取失败
+      # #    - metrics endpoint 地址为 /:tenant_id_namespace/metrics
+      # # 3. SINGLE_APP_MODE - 所有的 metrics string 都通过 /metrics endpoint 暴露
+
+      # # Prometheus 的配置文件，如果指定，agent service 会自动更新抓取配置
+      # - PROM_CFG_FILE=/etc/prometheus/conf/prometheus.yml
+
+      # # 抓取的主机地址，一般为 agent service 的 ip 地址:METRICS_HTTP_PORT
+      # - SCRAPE_HOST_PORT=172.28.10.10:33444
+
+      # # Prometheus 的地址，用来自动 reload 配置而无需手动重启 prometheus server，prometheus 需要启用 --web.enable-lifecycle
+      # - PROM_URL=http://172.28.10.8:9090
     volumes:
       - ./logs:/var/logs/agent-service-node
+      # - ./prometheus/conf/prometheus.yml:/etc/prometheus/conf/prometheus.yml
     # ports:
     #   - 33444:33444
     #   - 44445:44445

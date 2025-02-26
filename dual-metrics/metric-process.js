@@ -1,7 +1,8 @@
 const {
-    metrics
+    getAppMetrics
 } = require('./index');
 const linq = require('linq');
+const { addDualAppConfig } = require('../prom/yaml-helper');
 
 const logger = require('../log/log_helper_v2').default().useFile(__filename).useSingleAppendMode();
 
@@ -10,7 +11,18 @@ const logger = require('../log/log_helper_v2').default().useFile(__filename).use
  * @param {import('../data').IBaseMetric} metric 
  * @returns {import('prom-client').MetricObject | undefined}
  */
-function getMetricObject(metric) {
+async function getMetricObject(metric) {
+    const tenant_id = metric.attributes.tenant_id;
+    const namespace = metric.attributes.namespace;
+
+    await addDualAppConfig(tenant_id, namespace);
+
+    const app_id = `${tenant_id}_${namespace}`;
+    const metrics = getAppMetrics(app_id);
+    if (!metrics) {
+        throw new Error(`can not find the metric defination for ${app_id}`);
+    }
+
     const name = linq.from(Object.keys(metrics)).firstOrDefault(x => x === metric.name);
     if (name) {
         return metrics[name];
@@ -30,9 +42,14 @@ async function processMetrics(metrics, __trace_id) {
     }
 
     for (const m of metrics) {
-        const app_metric = getMetricObject(m);
+        if (!m.attributes || !m.attributes.tenant_id || !m.attributes.namespace) {
+            _logger.error(`tenant_id & namespace attributes are lost`);
+            continue;
+        }
+        const app_id = `${m.attributes.tenant_id}_${m.attributes.namespace}`;
+        const app_metric = await getMetricObject(m);
         if (!app_metric) {
-            _logger.warn(`UnSupported metric=[${m.name}] type=[${m.type}]`);
+            _logger.warn(`[${app_id}] UnSupported metric=[${m.name}] type=[${m.type}]`);
             continue;
         }
 
@@ -40,7 +57,7 @@ async function processMetrics(metrics, __trace_id) {
         for (const k of Object.keys(m.attributes)) {
             if (app_metric.labelNames.indexOf(k) === -1) {
 
-                _logger.warn(`UnSupported label [${k}]=[${m.attributes[k]}] for metric [${m.name}]`);
+                _logger.warn(`[${app_id}] UnSupported label [${k}]=[${m.attributes[k]}] for metric [${m.name}]`);
 
                 delete m.attributes[k];
             }

@@ -23,6 +23,7 @@ export BULL_BOARD_PORT=44445
 export REDIS_CONN_URL=redis://127.0.0.1:6379/15
 export APP_ID=cli_a59a471e0a7fd00d
 export APP_SECRET=LOplEasQrxvmWDiqa************
+export RUN_MODE=SINGLE_APP_MODE
 ```
 5. 启动
 ```bash
@@ -30,6 +31,7 @@ export APP_SECRET=LOplEasQrxvmWDiqa************
 node ./platform/ws.js
 
 // 消费队列，处理指标事件并暴露一个 /metrics endpoint 供 Prometheus server 爬取数据
+// 如果 RUN_MODE=DUAL_APP_MODE(1 个 App id 接收 N 个 apaas 应用的指标事件)，endpoint 是分开的，/:tenant_id_namespace/metrics
 node ./platform/job-handler.js
 
 // 可选，队列的管理面板
