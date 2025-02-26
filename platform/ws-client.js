@@ -11,7 +11,8 @@ myQueue.on('error', err => {
     console.log(`[ws]bull queue error`, err);
 })
 
-const { APP_ID, APP_SECRET } = process.env;
+const { APP_ID, APP_SECRET, LOG_LEVEL } = process.env;
+const logLevel = LOG_LEVEL && typeof lark.LoggerLevel[LOG_LEVEL] !== 'undefined' ? lark.LoggerLevel[LOG_LEVEL] : lark.LoggerLevel.info;
 
 logger.info(`Using app ${APP_ID} to subscribe event.`);
 
@@ -45,7 +46,7 @@ const SDKLoggerProxy = {
 const wsClient = new lark.WSClient({
     appId: APP_ID,
     appSecret: APP_SECRET,
-    loggerLevel: lark.LoggerLevel.debug,
+    loggerLevel: logLevel,
     logger: SDKLoggerProxy
 });
 
