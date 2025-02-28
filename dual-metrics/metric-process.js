@@ -6,6 +6,9 @@ const { addDualAppConfig } = require('../prom/yaml-helper');
 
 const logger = require('../log/log_helper_v2').default().useFile(__filename).useSingleAppendMode();
 
+const { PROCESS_DEV_EVENTS } = require('../mode-cfg');
+const is_process_dev_events = PROCESS_DEV_EVENTS === '1' || PROCESS_DEV_EVENTS === 'true';
+
 /**
  * 
  * @param {import('../data').IBaseMetric} metric 
@@ -46,6 +49,10 @@ async function processMetrics(metrics, __trace_id) {
             _logger.error(`tenant_id & namespace attributes are lost`);
             continue;
         }
+        if (!is_process_dev_events && m.attributes.env !== 'online') {
+            continue;
+        }
+
         const app_id = `${m.attributes.tenant_id}_${m.attributes.namespace}`;
         const app_metric = await getMetricObject(m);
         if (!app_metric) {
