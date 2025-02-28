@@ -5,6 +5,9 @@ const linq = require('linq');
 
 const logger = require('../log/log_helper_v2').default().useFile(__filename).useSingleAppendMode();
 
+const { PROCESS_DEV_EVENTS } = require('../mode-cfg');
+const is_process_dev_events = PROCESS_DEV_EVENTS === '1' || PROCESS_DEV_EVENTS === 'true';
+
 /**
  * 
  * @param {import('../data').IBaseMetric} metric 
@@ -30,6 +33,14 @@ async function processMetrics(metrics, __trace_id) {
     }
 
     for (const m of metrics) {
+        if (!m.attributes || !m.attributes.tenant_id || !m.attributes.namespace) {
+            _logger.error(`tenant_id & namespace attributes are lost`);
+            continue;
+        }
+        if (!is_process_dev_events && m.attributes.env !== 'online') {
+            continue;
+        }
+
         const app_metric = getMetricObject(m);
         if (!app_metric) {
             _logger.warn(`UnSupported metric=[${m.name}] type=[${m.type}]`);

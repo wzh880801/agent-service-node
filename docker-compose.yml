@@ -48,6 +48,9 @@ services:
       - APP_ID=cli_a59a471e0a7fd00d
       - APP_SECRET=LOplEasQrxvmWDiqa************
 
+      # # 是否处理非 online 环境（如开发环境）的指标数据
+      # - PROCESS_DEV_EVENTS=1
+
       # # 运行模式，默认 SINGLE_APP_MODE
       # - RUN_MODE=DUAL_APP_MODE
       # # 1. DUAL_APP_MODE 
