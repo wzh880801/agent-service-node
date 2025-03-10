@@ -182,6 +182,105 @@ const oapi_call_duration_milliseconds_summary = new client.Summary({
 //     percentiles: [0.25, 0.5, 0.9, 0.95, 0.99, 0.999]
 // });
 
+/**
+ * page metrics
+ */
+const page_labels = ['page_api_name', 'builder_version', 'page_type'];
+const page_query_result_lables = ['query_result', 'query_api_name'];
+const page_operate_labels = ['component_id', 'operate_type'];
+
+const page_load_count_total = new client.Counter({
+    name: 'page_load_count_total',
+    help: 'Total number of page loads',
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels)
+});
+
+// 2025-02-13 沟通更新：
+// 这个指标依赖 builder performance sdk 升级，是 builder 定制的一个指标，一期可以接受先不提供，先提供一个 FCP 和 LCP 指标（行业标准）
+// const page_load_duration_milliseconds_total = new client.Counter({
+//     name: 'page_load_duration_milliseconds_total',
+//     help: 'Total time cost in milliseconds of page loads',
+//     labelNames: [].concat(...generalAppLabels).concat(...page_labels)
+// });
+
+const page_load_lcp_duration_milliseconds_total = new client.Counter({
+    name: 'page_load_lcp_duration_milliseconds_total',
+    help: 'Total time cost in milliseconds of page Largest Contentful Paint during page loading',
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels)
+});
+
+const page_load_lcp_duration_milliseconds_summary = new client.Summary({
+    name: 'page_load_lcp_duration_milliseconds_summary',
+    help: 'A summary of Largest Contentful Paint',
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels),
+    percentiles: [0.25, 0.5, 0.9, 0.95, 0.99, 0.999]
+});
+
+const page_load_lcp_duration_milliseconds_histogram = new client.Histogram({
+    name: 'page_load_lcp_duration_milliseconds_histogram',
+    help: 'A histogram of Largest Contentful Paint',
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels),
+    buckets: [50, 100, 200, 300, 500, 1000, 1500, 2000, 4000, 8000, 10000, 12000, 16000, 20000, 30000]
+});
+
+const page_load_fcp_duration_milliseconds_total = new client.Counter({
+    name: 'page_load_fcp_duration_milliseconds_total',
+    help: 'Total time cost in milliseconds of page load First Contentful Paint',
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels)
+});
+
+const page_load_fcp_duration_milliseconds_summary = new client.Summary({
+    name: 'page_load_fcp_duration_milliseconds_summary',
+    help: 'A summary of First Contentful Paint',
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels),
+    percentiles: [0.25, 0.5, 0.9, 0.95, 0.99, 0.999]
+});
+
+const page_load_fcp_duration_milliseconds_histogram = new client.Histogram({
+    name: 'page_load_fcp_duration_milliseconds_histogram',
+    help: 'A histogram of First Contentful Paint',
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels),
+    buckets: [50, 100, 200, 300, 500, 1000, 1500, 2000, 4000, 8000, 10000, 12000, 16000, 20000, 30000]
+});
+
+const page_js_error_count_total = new client.Counter({
+    name: 'page_js_error_count_total',
+    help: 'Total number of CUSTOM JS errors',
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels)
+});
+
+const page_query_count_total = new client.Counter({
+    name: 'page_query_count_total',
+    help: 'Total number of page queries',
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_lables)
+});
+
+const page_query_duration_milliseconds_total = new client.Counter({
+    name: 'page_query_duration_milliseconds_total',
+    help: 'Total time cost in milliseconds of page queries',
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_lables)
+});
+
+const page_query_duration_milliseconds_summary = new client.Summary({
+    name: 'page_query_duration_milliseconds_summary',
+    help: 'A summary of page query durations',
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_lables),
+    percentiles: [0.25, 0.5, 0.9, 0.95, 0.99, 0.999]
+});
+
+const page_query_duration_milliseconds_histogram = new client.Histogram({
+    name: 'page_query_duration_milliseconds_histogram',
+    help: 'A histogram of page query durations',
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_lables),
+    buckets: [50, 100, 200, 300, 500, 1000, 1500, 2000, 4000, 8000, 10000, 12000, 16000, 20000, 30000]
+});
+
+const page_operate_count_total = new client.Counter({
+    name: 'page_operate_count_total',
+    help: 'Total number of page operations',
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_operate_labels)
+});
+
 const agent_labels = ['job_name'];
 const agent_request_total = new client.Counter({
     name: 'agent_request_total',
@@ -217,7 +316,21 @@ module.exports = {
         function_exec_duration_milliseconds_histogram,
         function_exec_duration_milliseconds_summary,
         function_exec_logs_total,
-        function_total,   
+        function_total,
+        
+        page_load_count_total,
+        page_load_lcp_duration_milliseconds_total,
+        page_load_lcp_duration_milliseconds_summary,
+        page_load_lcp_duration_milliseconds_histogram,
+        page_load_fcp_duration_milliseconds_total,
+        page_load_fcp_duration_milliseconds_summary,
+        page_load_fcp_duration_milliseconds_histogram,
+        page_js_error_count_total,
+        page_query_count_total,
+        page_query_duration_milliseconds_total,
+        page_query_duration_milliseconds_summary,
+        page_query_duration_milliseconds_histogram,
+        page_operate_count_total,
 
         agent_request_total,
         agent_request_duration_milliseconds_total,
