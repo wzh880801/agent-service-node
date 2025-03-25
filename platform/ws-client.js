@@ -60,13 +60,33 @@ wsClient.start({
         'apaas.application.metric.reported_v1': async (data) => {
 
             const _logger = logger.default().new();
-            _logger.append({ ext: 'METRIC_EVENT' }).info(data);
+            // _logger.append({ ext: 'APPLICATION_METRICS' }).info(data);
 
             await myQueue.add('apaas_metrics', {
                 ...data,
                 __trace_id: _logger.getTraceid()
             }, { removeOnComplete: { age: 3600 * 12, count: 100 } });
 
+        },
+
+        'apaas.application.event.reported_v1': async (data) => {
+
+            const _logger = logger.default().new();
+
+            await myQueue.add('apaas_events', {
+                ...data,
+                __trace_id: _logger.getTraceid()
+            }, { removeOnComplete: { age: 3600 * 12, count: 100 } });
+
+        },
+
+        'apaas.application.log.reported_v1': async (data) => {
+            const _logger = logger.default().new();
+
+            await myQueue.add('apaas_logs', {
+                ...data,
+                __trace_id: _logger.getTraceid()
+            }, { removeOnComplete: { age: 3600 * 12, count: 100 } })
         }
     })
 });
