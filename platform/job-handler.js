@@ -48,7 +48,7 @@ myQueue.process('apaas_metrics', async (job, done) => {
         _logger.append({ ext: 'APPLICATION_METRIC_COMMON' }).info(_body);
 
         for (const metric of body.metrics) {
-            _logger.append({ ext: 'APPLICATION_METRIC_INFO' }).info(metric);
+            _logger.append({ ext: 'APPLICATION_METRIC_INFO', __timestamp__: metric.timestamp }).info(metric);
         }
 
         const resp = await processMetrics(body.metrics, body.__trace_id);
@@ -83,7 +83,7 @@ myQueue.process('apaas_events', async (job, done) => {
         _logger.append({ ext: 'APPLICATION_EVENT_COMMON' }).info(_body);
 
         for (const event of body.events) {
-            _logger.append({ ext: 'APPLICATION_EVENT_INFO' }).info(event);
+            _logger.append({ ext: 'APPLICATION_EVENT_INFO', __timestamp__: event.start_timestamp }).info(event);
         }
 
         await job.progress(100);
@@ -116,7 +116,18 @@ myQueue.process('apaas_logs', async (job, done) => {
         _logger.append({ ext: 'APPLICATION_LOG_COMMON' }).info(_body);
 
         for (const log of body.logs) {
-            _logger.append({ ext: 'APPLICATION_LOG_INFO' }).info(log);
+            if (log.level === 'error') {
+                _logger.append({ ext: 'APPLICATION_LOG_INFO', __timestamp__: log.timestamp }).error(log);
+            }
+            else if (log.level === 'warn') {
+                _logger.append({ ext: 'APPLICATION_LOG_INFO', __timestamp__: log.timestamp }).warn(log);
+            }
+            else if (log.level === 'debug') {
+                _logger.append({ ext: 'APPLICATION_LOG_INFO', __timestamp__: log.timestamp }).debug(log);
+            }
+            else {
+                _logger.append({ ext: 'APPLICATION_LOG_INFO', __timestamp__: log.timestamp }).info(log);
+            }
         }
 
         await job.progress(100);

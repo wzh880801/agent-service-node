@@ -241,16 +241,22 @@ var LogHelper = /** @class */ (function () {
                 ext = level;
             }
         }
+        var _ts = ts;
+        var __labels = __assign({}, labels);
+        if (labels && labels.__timestamp__) {
+            _ts = parseInt(labels.__timestamp__);
+            delete __labels['__timestamp__'];
+        }
         var logs = {
             streams: [
                 {
-                    stream: __assign({ language: "NodeJS", level: _level, ext: ext, file: __filename, service_name: this.serviceName, platform: os.platform(), hostname: os.hostname(), mac: getMacAddress() }, labels),
+                    stream: __assign({ language: "NodeJS", level: _level, ext: ext, file: __filename, service_name: this.serviceName, platform: os.platform(), hostname: os.hostname(), mac: getMacAddress() }, __labels),
                     values: [{}]
                 },
             ]
         };
         var values = [
-            (ts * 1000000).toString(),
+            (_ts * 1000000).toString(),
             typeof log_obj === typeof {} ? JSON.stringify(log_obj) : "" + log_obj,
         ];
         if (typeof metadatas === typeof {} && metadatas) {
