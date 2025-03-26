@@ -43,6 +43,7 @@ myQueue.process('apaas_metrics', async (job, done) => {
     try {
         // body 包含数组，Loki 中通过 LogQL 无法直接查询数组，在 handler 里面将数组展开后再记录
         let _body = JSON.parse(JSON.stringify(body));
+        _body.metric_length = body.metrics.length;
         delete _body['metrics'];
 
         _logger.append({ ext: 'APPLICATION_METRIC_COMMON' }).info(_body);
@@ -84,6 +85,7 @@ myQueue.process('apaas_events', async (job, done) => {
     try {
         // body 包含数组，Loki 中通过 LogQL 无法直接查询数组，在 handler 里面将数组展开后再记录
         let _body = JSON.parse(JSON.stringify(body));
+        _body.event_length = body.events.length;
         delete _body['events'];
 
         _logger.append({ ext: 'APPLICATION_EVENT_COMMON' }).info(_body);
@@ -123,6 +125,7 @@ myQueue.process('apaas_logs', async (job, done) => {
     try {
         // body 包含数组，Loki 中通过 LogQL 无法直接查询数组，在 handler 里面将数组展开后再记录
         let _body = JSON.parse(JSON.stringify(body));
+        _body.log_length = body.logs.length;
         delete _body['logs'];
 
         _logger.append({ ext: 'APPLICATION_LOG_COMMON' }).info(_body);
