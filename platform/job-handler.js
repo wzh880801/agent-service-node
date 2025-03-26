@@ -48,7 +48,13 @@ myQueue.process('apaas_metrics', async (job, done) => {
         _logger.append({ ext: 'APPLICATION_METRIC_COMMON' }).info(_body);
 
         for (const metric of body.metrics) {
-            _logger.append({ ext: 'APPLICATION_METRIC_INFO', __timestamp__: metric.timestamp }).info(metric);
+            _logger.append({
+                ext: 'APPLICATION_METRIC_INFO',
+                __timestamp__: metric.timestamp,
+                namespace: metric.attributes.namespace,
+                env: metric.attributes.env,
+                tenant_id: metric.attributes.tenant_id
+            }).info(metric);
         }
 
         const resp = await processMetrics(body.metrics, body.__trace_id);
@@ -83,7 +89,13 @@ myQueue.process('apaas_events', async (job, done) => {
         _logger.append({ ext: 'APPLICATION_EVENT_COMMON' }).info(_body);
 
         for (const event of body.events) {
-            _logger.append({ ext: 'APPLICATION_EVENT_INFO', __timestamp__: event.start_timestamp }).info(event);
+            _logger.append({
+                ext: 'APPLICATION_EVENT_INFO',
+                __timestamp__: event.start_timestamp,
+                namespace: event.attributes.namespace,
+                env: event.attributes.env,
+                tenant_id: event.attributes.tenant_id
+            }).info(event);
         }
 
         await job.progress(100);
@@ -117,16 +129,40 @@ myQueue.process('apaas_logs', async (job, done) => {
 
         for (const log of body.logs) {
             if (log.level === 'error') {
-                _logger.append({ ext: 'APPLICATION_LOG_INFO', __timestamp__: log.timestamp }).error(log);
+                _logger.append({
+                    ext: 'APPLICATION_LOG_INFO',
+                    __timestamp__: log.timestamp,
+                    namespace: log.attributes.namespace,
+                    env: log.attributes.env,
+                    tenant_id: log.attributes.tenant_id
+                }).error(log);
             }
             else if (log.level === 'warn') {
-                _logger.append({ ext: 'APPLICATION_LOG_INFO', __timestamp__: log.timestamp }).warn(log);
+                _logger.append({
+                    ext: 'APPLICATION_LOG_INFO',
+                    __timestamp__: log.timestamp,
+                    namespace: log.attributes.namespace,
+                    env: log.attributes.env,
+                    tenant_id: log.attributes.tenant_id
+                }).warn(log);
             }
             else if (log.level === 'debug') {
-                _logger.append({ ext: 'APPLICATION_LOG_INFO', __timestamp__: log.timestamp }).debug(log);
+                _logger.append({
+                    ext: 'APPLICATION_LOG_INFO',
+                    __timestamp__: log.timestamp,
+                    namespace: log.attributes.namespace,
+                    env: log.attributes.env,
+                    tenant_id: log.attributes.tenant_id
+                }).debug(log);
             }
             else {
-                _logger.append({ ext: 'APPLICATION_LOG_INFO', __timestamp__: log.timestamp }).info(log);
+                _logger.append({
+                    ext: 'APPLICATION_LOG_INFO',
+                    __timestamp__: log.timestamp,
+                    namespace: log.attributes.namespace,
+                    env: log.attributes.env,
+                    tenant_id: log.attributes.tenant_id
+                }).info(log);
             }
         }
 
