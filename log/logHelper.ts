@@ -4,6 +4,7 @@ import * as moment from 'moment-timezone';
 import * as axios from 'axios';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
+import { randomInt } from 'crypto';
 
 const sensitive_words = [
     'username', 'password', 'pass', 'passcode',
@@ -74,7 +75,7 @@ export class LogHelper {
         // 检查文件大小
         if (fs.existsSync(log_file)) {
             var stats = fs.statSync(log_file);
-            if (stats.size >= 10 * 1024 * 1024) { // 10MB
+            if (stats.size >= 8 * 1024 * 1024) { // 8MB
                 number++;
                 return this.logPath + "/" + currentDate + "-" + String(number).padStart(3, '0') + ".txt";
             }
@@ -442,7 +443,7 @@ export class LogHelper {
             }
 
             const values: any[] = [
-                (_ts * 1000000).toString(),
+                (_ts * 1000000 + randomInt(1, 100000)).toString(),
                 typeof log_obj === typeof {} ? JSON.stringify(log_obj) : `${log_obj}`,
             ];
 

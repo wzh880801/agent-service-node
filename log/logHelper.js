@@ -53,6 +53,7 @@ var moment = require("moment-timezone");
 var axios = require("axios");
 var os = require("os");
 var uuid_1 = require("uuid");
+var crypto_1 = require("crypto");
 var sensitive_words = [
     'username', 'password', 'pass', 'passcode',
     'client_secret', 'clientSecret',
@@ -112,7 +113,7 @@ var LogHelper = /** @class */ (function () {
         // 检查文件大小
         if (fs.existsSync(log_file)) {
             var stats = fs.statSync(log_file);
-            if (stats.size >= 10 * 1024 * 1024) { // 10MB
+            if (stats.size >= 8 * 1024 * 1024) { // 8MB
                 number++;
                 return this.logPath + "/" + currentDate + "-" + String(number).padStart(3, '0') + ".txt";
             }
@@ -400,7 +401,7 @@ var LogHelper = /** @class */ (function () {
                 delete _labels['__timestamp__'];
             }
             var values = [
-                (_ts * 1000000).toString(),
+                (_ts * 1000000 + (0, crypto_1.randomInt)(1, 100000)).toString(),
                 typeof log_obj === typeof {} ? JSON.stringify(log_obj) : "".concat(log_obj),
             ];
             if (typeof metadatas === typeof {} && metadatas) {
