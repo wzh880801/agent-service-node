@@ -102,7 +102,7 @@ myQueue.process('apaas_events', async (job, done) => {
 
         await job.progress(100);
 
-        done(null, resp);
+        done();
     }
     catch (err) {
         _logger.append({ ext: 'JOB_PROCESS_ERROR' }).error(err);
@@ -171,7 +171,7 @@ myQueue.process('apaas_logs', async (job, done) => {
 
         await job.progress(100);
 
-        done(null, resp);
+        done();
     }
     catch (err) {
         _logger.append({ ext: 'JOB_PROCESS_ERROR' }).error(err);
