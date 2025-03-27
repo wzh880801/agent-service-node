@@ -288,6 +288,40 @@ var LogHelper = /** @class */ (function () {
             }, false);
         });
     };
+    // 新增异步队列
+    const asyncQueue = [];
+    let isProcessing = false;
+    
+    async function processQueue() {
+        if (isProcessing || asyncQueue.length === 0) return;
+        isProcessing = true;
+        const { logLevel, traceId, labels, metadatas, logObj, retry } = asyncQueue.shift();
+        if(retry > 3) {
+            console.error('Max retry reached for log:', logObj);
+            isProcessing = false;
+            processQueue.call(this);
+            return;
+        }
+
+        try {
+            await new Promise((resolve) => {
+                this.report_log(new Date(get_bj_time()).getTime(), logLevel, labels, metadatas, logObj, (data, err) => {
+                    if (err) {
+                        console.error('Report log error:', err);
+                        // 重试机制
+                        asyncQueue.unshift({ logLevel, traceId, labels, metadatas, logObj, retry: retry++ });
+                    }
+                    resolve();
+                });
+            });
+        } catch (error) {
+            console.error('Queue processing error:', error);
+        } finally {
+            isProcessing = false;
+            processQueue.call(this);
+        }
+    }
+    
     LogHelper.prototype.log = function (log_level, trace_id, labels, metadatas, log_obj, is_report_log) {
         if (is_report_log === void 0) { is_report_log = true; }
         var ts_bj = get_bj_time();
@@ -306,9 +340,9 @@ var LogHelper = /** @class */ (function () {
         if (!fs.existsSync(this.logPath)) {
             fs.mkdirSync(this.logPath, { recursive: true });
         }
-
+    
         var log_file = this.getLogFileName();
-
+    
         fs.appendFile(log_file, ts_bj + "\t" + log_level + "\t" + log_str + "\n", function (err) {
             if (err) {
                 console.log(err);
@@ -321,8 +355,9 @@ var LogHelper = /** @class */ (function () {
         if (metadatas && typeof metadatas === typeof {}) {
             __metadatas = __assign({}, metadatas, __metadatas);
         }
-        this.report_log(new Date(ts_bj).getTime(), log_level, labels, __metadatas, _log_obj, function (data, err) {
-        });
+        // 将请求放入队列
+        asyncQueue.push({ logLevel: log_level, traceId: trace_id, labels, metadatas: __metadatas, logObj: _log_obj, retry: 0 });
+        processQueue.call(this);
     };
 
     LogHelper.prototype.getBJDate = function () {
