@@ -157,11 +157,28 @@ function getAppMetrics(app_id) {
 
     // 2025-02-13 沟通更新：
     // 这个指标依赖 builder performance sdk 升级，是 builder 定制的一个指标，一期可以接受先不提供，先提供一个 FCP 和 LCP 指标（行业标准）
-    // const page_load_duration_milliseconds_total = new client.Counter({
-    //     name: 'page_load_duration_milliseconds_total',
-    //     help: 'Total time cost in milliseconds of page loads',
-    //     labelNames: [].concat(...generalAppLabels).concat(...page_labels)
-    // });
+    const page_load_duration_milliseconds_total = new client.Counter({
+        name: 'page_load_duration_milliseconds_total',
+        help: 'Total time cost in milliseconds of page loads',
+        labelNames: [].concat(...generalAppLabels).concat(...page_labels),
+        registers: [registry]
+    });
+
+    const page_load_duration_milliseconds_summary = new client.Summary({
+        name: 'page_load_duration_milliseconds_summary',
+        help: 'A summary of page loads',
+        labelNames: [].concat(...generalAppLabels).concat(...page_labels),
+        percentiles: [0.25, 0.5, 0.9, 0.95, 0.99, 0.999],
+        registers: [registry]
+    });
+
+    const page_load_duration_milliseconds_histogram = new client.Histogram({
+        name: 'page_load_duration_milliseconds_histogram',
+        help: 'A histogram of page loads',
+        labelNames: [].concat(...generalAppLabels).concat(...page_labels),
+        buckets: [50, 100, 200, 300, 500, 1000, 1500, 2000, 4000, 8000, 10000, 12000, 16000, 20000, 30000],
+        registers: [registry]
+    });
 
     const page_load_lcp_duration_milliseconds_total = new client.Counter({
         name: 'page_load_lcp_duration_milliseconds_total',
@@ -269,6 +286,9 @@ function getAppMetrics(app_id) {
         function_total,
 
         page_load_count_total,
+        page_load_duration_milliseconds_total,
+        page_load_duration_milliseconds_summary,
+        page_load_duration_milliseconds_histogram,
         page_load_lcp_duration_milliseconds_total,
         page_load_lcp_duration_milliseconds_summary,
         page_load_lcp_duration_milliseconds_histogram,
