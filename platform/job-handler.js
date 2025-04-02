@@ -28,7 +28,7 @@ myQueue.on('error', err => {
 
 const { processMetrics } = IS_DUAL_APP_MODE ? require('../dual-metrics/metric-process') : require('../metrics/metric-process');
 
-// 增加队列的处理逻辑
+// 增加 metrics 队列的处理逻辑
 myQueue.process('apaas_metrics', async (job, done) => {
 
     const body = job.data;
@@ -41,11 +41,137 @@ myQueue.process('apaas_metrics', async (job, done) => {
     await job.progress(10);
 
     try {
+        // body 包含数组，Loki 中通过 LogQL 无法直接查询数组，在 handler 里面将数组展开后再记录
+        let _body = JSON.parse(JSON.stringify(body));
+        _body.metric_length = body.metrics.length;
+        delete _body['metrics'];
+
+        _logger.append({ ext: 'APPLICATION_METRIC_COMMON' }).info(_body);
+
+        for (const metric of body.metrics) {
+            _logger.append({
+                ext: 'APPLICATION_METRIC_INFO',
+                __timestamp__: metric.timestamp,
+                namespace: metric.attributes.namespace,
+                env: metric.attributes.env,
+                tenant_id: metric.attributes.tenant_id
+            }).info(metric);
+        }
+
         const resp = await processMetrics(body.metrics, body.__trace_id);
 
         await job.progress(100);
 
         done(null, resp);
+    }
+    catch (err) {
+        _logger.append({ ext: 'JOB_PROCESS_ERROR' }).error(err);
+        done(err, null);
+    }
+});
+
+// 增加 events 队列的处理逻辑
+myQueue.process('apaas_events', async (job, done) => {
+
+    const body = job.data;
+
+    const _logger = logger.default().new();
+    if (body.__trace_id) {
+        _logger.useTraceId(body.__trace_id);
+    }
+
+    await job.progress(10);
+
+    try {
+        // body 包含数组，Loki 中通过 LogQL 无法直接查询数组，在 handler 里面将数组展开后再记录
+        let _body = JSON.parse(JSON.stringify(body));
+        _body.event_length = body.events.length;
+        delete _body['events'];
+
+        _logger.append({ ext: 'APPLICATION_EVENT_COMMON' }).info(_body);
+
+        for (const event of body.events) {
+            _logger.append({
+                ext: 'APPLICATION_EVENT_INFO',
+                __timestamp__: event.start_timestamp,
+                namespace: event.attributes.namespace,
+                env: event.attributes.env,
+                tenant_id: event.attributes.tenant_id
+            }).info(event);
+        }
+
+        await job.progress(100);
+
+        done();
+    }
+    catch (err) {
+        _logger.append({ ext: 'JOB_PROCESS_ERROR' }).error(err);
+        done(err, null);
+    }
+});
+
+// 增加 logs 队列的处理逻辑
+myQueue.process('apaas_logs', async (job, done) => {
+
+    const body = job.data;
+
+    const _logger = logger.default().new();
+    if (body.__trace_id) {
+        _logger.useTraceId(body.__trace_id);
+    }
+
+    await job.progress(10);
+
+    try {
+        // body 包含数组，Loki 中通过 LogQL 无法直接查询数组，在 handler 里面将数组展开后再记录
+        let _body = JSON.parse(JSON.stringify(body));
+        _body.log_length = body.logs.length;
+        delete _body['logs'];
+
+        _logger.append({ ext: 'APPLICATION_LOG_COMMON' }).info(_body);
+
+        for (const log of body.logs) {
+            if (log.level === 'error') {
+                _logger.append({
+                    ext: 'APPLICATION_LOG_INFO',
+                    __timestamp__: log.timestamp,
+                    namespace: log.attributes.namespace,
+                    env: log.attributes.env,
+                    tenant_id: log.attributes.tenant_id
+                }).error(log);
+            }
+            else if (log.level === 'warn') {
+                _logger.append({
+                    ext: 'APPLICATION_LOG_INFO',
+                    __timestamp__: log.timestamp,
+                    namespace: log.attributes.namespace,
+                    env: log.attributes.env,
+                    tenant_id: log.attributes.tenant_id
+                }).warn(log);
+            }
+            else if (log.level === 'debug') {
+                _logger.append({
+                    ext: 'APPLICATION_LOG_INFO',
+                    __timestamp__: log.timestamp,
+                    namespace: log.attributes.namespace,
+                    env: log.attributes.env,
+                    tenant_id: log.attributes.tenant_id
+                }).debug(log);
+            }
+            else {
+                _logger.append({
+                    ext: 'APPLICATION_LOG_INFO',
+                    __timestamp__: log.timestamp,
+                    namespace: log.attributes.namespace,
+                    env: log.attributes.env,
+                    tenant_id: log.attributes.tenant_id
+                }).info(log);
+            }
+        }
+
+        await job.progress(100);
+
+        done();
     }
     catch (err) {
         _logger.append({ ext: 'JOB_PROCESS_ERROR' }).error(err);

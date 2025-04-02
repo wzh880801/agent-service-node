@@ -17,9 +17,20 @@ wsClient.start({
          */
         'apaas.application.metric.reported_v1': async (data) => {
 
-            console.log(`====>${new Date().toISOString()}`);
+            console.log(`====>${new Date().toISOString()}\tapaas.application.metric.reported_v1`);
             console.log(JSON.stringify(data, null, 2));
 
+        },
+
+        'apaas.application.event.reported_v1': async (data) => {
+
+            console.log(`====>${new Date().toISOString()}\tapaas.application.event.reported_v1`);
+            console.log(JSON.stringify(data, null, 2));
+        },
+
+        'apaas.application.log.reported_v1': async (data) => {
+            console.log(`====>${new Date().toISOString()}\tapaas.application.log.reported_v1`);
+            console.log(JSON.stringify(data, null, 2));
         }
     })
 });

@@ -51,6 +51,9 @@ services:
       # # 是否处理非 online 环境（如开发环境）的指标数据
       # - PROCESS_DEV_EVENTS=1
 
+      # # 是否保存原始事件信息
+      # - SAVE_RAW_EVENT=1
+
       # # 运行模式，默认 SINGLE_APP_MODE
       # - RUN_MODE=DUAL_APP_MODE
       # # 1. DUAL_APP_MODE 
