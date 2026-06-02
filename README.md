@@ -1,6 +1,6 @@
 # agent-service-node
 
-- 订阅应用指标上报事件，使用 Prometheus SDK 进行指标处理，暴露 metrics http endpoint 以便让 Prometheus server 抓取指标数据
+- 订阅 aPaaS 应用的上报事件（指标、事件、日志），使用 Prometheus SDK 进行指标处理，暴露 metrics HTTP endpoint 以便让 Prometheus server 抓取指标数据
 
 ## 架构说明
 
@@ -27,8 +27,18 @@
 
 服务由 3 个进程组成：
 - **ws-client.js**：通过 WebSocket 长连接接收飞书开放平台事件，转存到 Bull 队列
-- **job-handler.js**：消费队列，处理指标事件并暴露 HTTP endpoint 供 Prometheus 抓取
+- **job-handler.js**：消费队列，处理事件并暴露 HTTP endpoint 供 Prometheus 抓取
 - **bull-board.js**（可选）：Bull 队列的可视化管理面板
+
+### 订阅的事件类型
+
+ws-client.js 订阅了 3 类 aPaaS 应用上报事件：
+
+| 事件类型 | Job 队列 | job-handler.js 处理方式 |
+|---------|---------|------------------------|
+| `apaas.application.metric.reported_v1` | `apaas_metrics` | 解析为 Prometheus Counter/Gauge/Histogram/Summary 指标 |
+| `apaas.application.event.reported_v1` | `apaas_events` | 记录到 Loki/本地日志（不生成 Prometheus 指标） |
+| `apaas.application.log.reported_v1` | `apaas_logs` | 按 `error`/`warn`/`debug`/`info` 级别分级记录到日志 |
 
 ## 运行模式
 
