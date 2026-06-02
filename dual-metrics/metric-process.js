@@ -1,7 +1,6 @@
 const {
     getAppMetrics
 } = require('./index');
-const linq = require('linq');
 const { addDualAppConfig } = require('../prom/yaml-helper');
 
 const logger = require('../log/log_helper_v2').default().useFile(__filename).useSingleAppendMode();
@@ -14,22 +13,14 @@ const is_process_dev_events = PROCESS_DEV_EVENTS === '1' || PROCESS_DEV_EVENTS =
  * @param {import('../data').IBaseMetric} metric 
  * @returns {import('prom-client').MetricObject | undefined}
  */
-async function getMetricObject(metric) {
-    const tenant_id = metric.attributes.tenant_id;
-    const namespace = metric.attributes.namespace;
-
-    await addDualAppConfig(tenant_id, namespace);
-
-    const app_id = `${tenant_id}_${namespace}`;
+function getMetricObject(metric) {
+    const app_id = `${metric.attributes.tenant_id}_${metric.attributes.namespace}`;
     const metrics = getAppMetrics(app_id);
     if (!metrics) {
         throw new Error(`can not find the metric defination for ${app_id}`);
     }
 
-    const name = linq.from(Object.keys(metrics)).firstOrDefault(x => x === metric.name);
-    if (name) {
-        return metrics[name];
-    }
+    return metrics[metric.name];
 }
 
 /**
@@ -44,6 +35,18 @@ async function processMetrics(metrics, __trace_id) {
         _logger.useTraceId(__trace_id);
     }
 
+    // 批量预注册所有唯一的 tenant/namespace 配置，避免循环中重复触发文件 I/O
+    const seenConfigs = new Set();
+    for (const m of metrics) {
+        if (m.attributes?.tenant_id && m.attributes?.namespace) {
+            const key = `${m.attributes.tenant_id}_${m.attributes.namespace}`;
+            if (!seenConfigs.has(key)) {
+                seenConfigs.add(key);
+                await addDualAppConfig(m.attributes.tenant_id, m.attributes.namespace);
+            }
+        }
+    }
+
     for (const m of metrics) {
         if (!m.attributes || !m.attributes.tenant_id || !m.attributes.namespace) {
             _logger.error(`tenant_id & namespace attributes are lost`);
@@ -54,7 +57,7 @@ async function processMetrics(metrics, __trace_id) {
         }
 
         const app_id = `${m.attributes.tenant_id}_${m.attributes.namespace}`;
-        const app_metric = await getMetricObject(m);
+        const app_metric = getMetricObject(m);
         if (!app_metric) {
             _logger.warn(`[${app_id}] UnSupported metric=[${m.name}] type=[${m.type}]`);
             continue;

@@ -8,31 +8,31 @@ const generalAppLabels = [
 
 // function
 const function_g_labels = ['function_api_name', 'language', 'is_long_task', 'is_front_end_access_enabled', 'runtime'];
-const function_exec_lables = [].concat(...generalAppLabels).concat(...['exec_result', 'trigger_type']).concat(...function_g_labels);
+const function_exec_labels = [].concat(...generalAppLabels).concat(...['exec_result', 'trigger_type']).concat(...function_g_labels);
 
 const function_exec_total = new client.Counter({
     name: 'function_exec_total',
     help: 'Total number of function executions',
-    labelNames: function_exec_lables
+    labelNames: function_exec_labels
 });
 
 const function_exec_duration_milliseconds_total = new client.Counter({
     name: 'function_exec_duration_milliseconds_total',
     help: 'Total time cost in milliseconds of function executions',
-    labelNames: function_exec_lables
+    labelNames: function_exec_labels
 });
 
 const function_exec_duration_milliseconds_histogram = new client.Histogram({
     name: 'function_exec_duration_milliseconds_histogram',
     help: 'A histogram of latencies per execution',
-    labelNames: function_exec_lables,
+    labelNames: function_exec_labels,
     buckets: [100, 200, 300, 500, 1000, 1500, 2000, 4000, 8000, 10000, 30000, 60000, 300000, 600000, 900000, 3600000, 5400000, 7200000, 9000000]
 });
 
 const function_exec_duration_milliseconds_summary = new client.Summary({
     name: 'function_exec_duration_milliseconds_summary',
     help: 'A summary of latencies per execution',
-    labelNames: function_exec_lables,
+    labelNames: function_exec_labels,
     percentiles: [0.25, 0.5, 0.9, 0.95, 0.99, 0.999],
 
 });
@@ -51,39 +51,39 @@ const function_total = new client.Gauge({
 
 // // data
 // const data_g_labels = [];
-// const data_exec_lables = [].concat(...generalAppLabels).concat(...data_query_source).concat(...data_query_source_ext).concat(...data_g_labels).concat(...['source']);
-// const data_exec_completed_lables = [].concat(...data_exec_lables).concat(...['exec_result', 'response_code']);
+// const data_exec_labels = [].concat(...generalAppLabels).concat(...data_query_source).concat(...data_query_source_ext).concat(...data_g_labels).concat(...['source']);
+// const data_exec_completed_labels = [].concat(...data_exec_labels).concat(...['exec_result', 'response_code']);
 
 // const data_engine_query_total = new client.Counter({
 //     name: 'data_engine_query_total',
 //     help: 'Total number of data queries',
-//     labelNames: data_exec_completed_lables
+//     labelNames: data_exec_completed_labels
 // });
 
 // const data_engine_query_duration_milliseconds_total = new client.Counter({
 //     name: 'data_engine_query_duration_milliseconds_total',
 //     help: 'Total time cost in milliseconds of data queries',
-//     labelNames: data_exec_completed_lables
+//     labelNames: data_exec_completed_labels
 // });
 
 // const data_engine_query_duration_milliseconds_histogram = new client.Histogram({
 //     name: 'data_engine_query_duration_milliseconds_histogram',
 //     help: 'A histogram of latencies per query',
-//     labelNames: data_exec_completed_lables,
+//     labelNames: data_exec_completed_labels,
 //     buckets: [300, 500, 1000, 1500, 2000, 4000, 8000, 10000]
 // });
 
 // const data_engine_query_duration_milliseconds_summary = new client.Summary({
 //     name: 'data_engine_query_duration_milliseconds_summary',
 //     help: 'A summary of latencies per query',
-//     labelNames: data_exec_completed_lables,
+//     labelNames: data_exec_completed_labels,
 //     percentiles: [0.25, 0.5, 0.9, 0.95, 0.99, 0.999]
 // });
 
 // // const data_engine_query_executing_count = new client.Gauge({
 // //     name: 'data_engine_query_executing_count',
 // //     help: 'help info of data_engine_query_executing_count',
-// //     labelNames: data_exec_lables
+// //     labelNames: data_exec_labels
 // // });
 
 // const data_engine_objects_total = new client.Gauge({
@@ -186,7 +186,7 @@ const oapi_call_duration_milliseconds_summary = new client.Summary({
  * page metrics
  */
 const page_labels = ['page_api_name', 'builder_version', 'page_type'];
-const page_query_result_lables = ['query_result', 'query_api_name'];
+const page_query_result_labels = ['query_result', 'query_api_name'];
 const page_operate_labels = ['component_id', 'operate_type'];
 
 const page_load_count_total = new client.Counter({
@@ -266,26 +266,26 @@ const page_js_error_count_total = new client.Counter({
 const page_query_count_total = new client.Counter({
     name: 'page_query_count_total',
     help: 'Total number of page queries',
-    labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_lables)
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_labels)
 });
 
 const page_query_duration_milliseconds_total = new client.Counter({
     name: 'page_query_duration_milliseconds_total',
     help: 'Total time cost in milliseconds of page queries',
-    labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_lables)
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_labels)
 });
 
 const page_query_duration_milliseconds_summary = new client.Summary({
     name: 'page_query_duration_milliseconds_summary',
     help: 'A summary of page query durations',
-    labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_lables),
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_labels),
     percentiles: [0.25, 0.5, 0.9, 0.95, 0.99, 0.999]
 });
 
 const page_query_duration_milliseconds_histogram = new client.Histogram({
     name: 'page_query_duration_milliseconds_histogram',
     help: 'A histogram of page query durations',
-    labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_lables),
+    labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_labels),
     buckets: [50, 100, 200, 300, 500, 1000, 1500, 2000, 4000, 8000, 10000, 12000, 16000, 20000, 30000]
 });
 

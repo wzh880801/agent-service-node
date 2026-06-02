@@ -1,7 +1,6 @@
 const {
     metrics
 } = require('./index');
-const linq = require('linq');
 
 const logger = require('../log/log_helper_v2').default().useFile(__filename).useSingleAppendMode();
 
@@ -14,10 +13,7 @@ const is_process_dev_events = PROCESS_DEV_EVENTS === '1' || PROCESS_DEV_EVENTS =
  * @returns {import('prom-client').MetricObject | undefined}
  */
 function getMetricObject(metric) {
-    const name = linq.from(Object.keys(metrics)).firstOrDefault(x => x === metric.name);
-    if (name) {
-        return metrics[name];
-    }
+    return metrics[metric.name];
 }
 
 /**

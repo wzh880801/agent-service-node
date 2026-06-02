@@ -42,13 +42,12 @@ myQueue.process('apaas_metrics', async (job, done) => {
 
     try {
         // body 包含数组，Loki 中通过 LogQL 无法直接查询数组，在 handler 里面将数组展开后再记录
-        let _body = JSON.parse(JSON.stringify(body));
-        _body.metric_length = body.metrics.length;
-        delete _body['metrics'];
+        const { metrics: _metrics, ..._body } = body;
+        _body.metric_length = _metrics.length;
 
         _logger.append({ ext: 'APPLICATION_METRIC_COMMON' }).info(_body);
 
-        for (const metric of body.metrics) {
+        for (const metric of _metrics) {
             _logger.append({
                 ext: 'APPLICATION_METRIC_INFO',
                 __timestamp__: metric.timestamp,
@@ -58,7 +57,7 @@ myQueue.process('apaas_metrics', async (job, done) => {
             }).info(metric);
         }
 
-        const resp = await processMetrics(body.metrics, body.__trace_id);
+        const resp = await processMetrics(_metrics, body.__trace_id);
 
         await job.progress(100);
 
@@ -84,13 +83,12 @@ myQueue.process('apaas_events', async (job, done) => {
 
     try {
         // body 包含数组，Loki 中通过 LogQL 无法直接查询数组，在 handler 里面将数组展开后再记录
-        let _body = JSON.parse(JSON.stringify(body));
-        _body.event_length = body.events.length;
-        delete _body['events'];
+        const { events: _events, ..._body } = body;
+        _body.event_length = _events.length;
 
         _logger.append({ ext: 'APPLICATION_EVENT_COMMON' }).info(_body);
 
-        for (const event of body.events) {
+        for (const event of _events) {
             _logger.append({
                 ext: 'APPLICATION_EVENT_INFO',
                 __timestamp__: event.start_timestamp,
@@ -124,13 +122,12 @@ myQueue.process('apaas_logs', async (job, done) => {
 
     try {
         // body 包含数组，Loki 中通过 LogQL 无法直接查询数组，在 handler 里面将数组展开后再记录
-        let _body = JSON.parse(JSON.stringify(body));
-        _body.log_length = body.logs.length;
-        delete _body['logs'];
+        const { logs: _logs, ..._body } = body;
+        _body.log_length = _logs.length;
 
         _logger.append({ ext: 'APPLICATION_LOG_COMMON' }).info(_body);
 
-        for (const log of body.logs) {
+        for (const log of _logs) {
             if (log.level === 'error') {
                 _logger.append({
                     ext: 'APPLICATION_LOG_INFO',
@@ -203,7 +200,7 @@ app.get('/metrics', async (req, res) => {
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     if (IS_DUAL_APP_MODE) {
-        res.send('Service running in DUAL_APP_MODE, endpoint not invaliad. Please use /:tenant_id_namespace/metrics instead.');
+        res.send('Service running in DUAL_APP_MODE, endpoint not invalid. Please use /:tenant_id_namespace/metrics instead.');
         return;
     }
 
@@ -247,13 +244,13 @@ app.get('/:app_id/metrics', async (req, res) => {
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
 
     if (!IS_DUAL_APP_MODE) {
-        res.send('Service running in SINGLE_APP_MODE, endpoint not invaliad. Please use /metrics instead.');
+        res.send('Service running in SINGLE_APP_MODE, endpoint not invalid. Please use /metrics instead.');
         return;
     }
 
     const app_id = req.params.app_id;
     if (!app_id) {
-        res.send('invaliad app_id');
+        res.send('invalid app_id');
         return;
     }
 
@@ -277,6 +274,10 @@ app.get('/:app_id/metrics', async (req, res) => {
 
     res.send(metrics_string);
     res.end();
+})
+
+app.get('/health', async (req, res) => {
+    res.status(200).json({ status: 'ok' });
 })
 
 const HTTP_PORT = process.env['METRICS_HTTP_PORT'] ? process.env['METRICS_HTTP_PORT'] : 33444;
