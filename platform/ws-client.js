@@ -98,3 +98,23 @@ wsClient.start({
         }
     })
 });
+
+// 优雅关闭
+async function gracefulShutdown(signal) {
+    logger.info(`Received ${signal}, starting graceful shutdown...`);
+
+    try {
+        await wsClient.stop();
+        logger.info('WS client stopped.');
+    } catch (err) {
+        logger.error('Error stopping WS client:', err);
+    }
+
+    await myQueue.close();
+    logger.info('Bull queue closed.');
+
+    process.exit(0);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

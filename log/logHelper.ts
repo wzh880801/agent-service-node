@@ -249,7 +249,7 @@ export class LogHelper {
             if (!this.isSingleAppendMode) {
                 this.__initMetadatas = {
                     ...this.__initMetadatas,
-                    ...labels
+                    ...metadatas
                 };
             }
         }

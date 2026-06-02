@@ -282,6 +282,23 @@ app.get('/:app_id/metrics', async (req, res) => {
 const HTTP_PORT = process.env['METRICS_HTTP_PORT'] ? process.env['METRICS_HTTP_PORT'] : 33444;
 
 /* 监听端口 */
-app.listen(HTTP_PORT, () => {
+const server = app.listen(HTTP_PORT, () => {
     logger.info(`listening: ${HTTP_PORT}`);
-})
+});
+
+// 优雅关闭
+async function gracefulShutdown(signal) {
+    logger.info(`Received ${signal}, starting graceful shutdown...`);
+
+    server.close(() => {
+        logger.info('HTTP server closed.');
+    });
+
+    await myQueue.close();
+    logger.info('Bull queue closed.');
+
+    process.exit(0);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

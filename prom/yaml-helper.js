@@ -211,7 +211,7 @@ function buildNewAppCfg(tenant_id, namespace) {
  * @returns {boolean}
  */
 function isDualAppCfg(cfg) {
-    const regex = /\/(?<name>.+?)\/metrics/gm;
+    const regex = /\/(?<name>.+?)\/metrics/;
     if (cfg && cfg.metrics_path && cfg.job_name) {
         const m = regex.exec(cfg.metrics_path);
         if (m && m.groups['name'] && m.groups['name'] === cfg.job_name) {

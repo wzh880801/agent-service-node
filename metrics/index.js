@@ -7,7 +7,7 @@ const generalAppLabels = [
 ];
 
 // function
-const function_g_labels = ['function_api_name', 'language', 'is_long_task', 'is_front_end_access_enabled'];
+const function_g_labels = ['function_api_name', 'language', 'is_long_task', 'is_front_end_access_enabled', 'runtime'];
 const function_exec_lables = [].concat(...generalAppLabels).concat(...['exec_result', 'trigger_type']).concat(...function_g_labels);
 
 const function_exec_total = new client.Counter({

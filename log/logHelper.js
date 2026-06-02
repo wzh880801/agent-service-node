@@ -259,7 +259,7 @@ var LogHelper = /** @class */ (function () {
         if (metadatas) {
             this.metadatas = __assign(__assign({}, this.metadatas), metadatas);
             if (!this.isSingleAppendMode) {
-                this.__initMetadatas = __assign(__assign({}, this.__initMetadatas), labels);
+                this.__initMetadatas = __assign(__assign({}, this.__initMetadatas), metadatas);
             }
         }
         return this;

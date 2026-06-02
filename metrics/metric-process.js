@@ -57,6 +57,11 @@ async function processMetrics(metrics, __trace_id) {
             }
         }
 
+        if (typeof m.value !== 'number' || Number.isNaN(m.value)) {
+            _logger.warn(`Invalid metric value for [${m.name}]: ${m.value}`);
+            continue;
+        }
+
         if (m.type === 'counter') {
             app_metric.labels(m.attributes).inc(m.value);
         }
