@@ -16,8 +16,8 @@ const agent_metric_registry = new client.Registry();
  * @returns {string}
  */
 function formatAppId(app_id) {
-    if (!app_id || typeof app_id !== typeof '') {
-        return;
+    if (!app_id || typeof app_id !== 'string') {
+        return '';
     }
     return app_id.toLowerCase();
 }
@@ -48,27 +48,27 @@ function getAppMetrics(app_id) {
     }
 
     // function
-    const function_g_labels = ['function_api_name', 'language', 'is_long_task', 'is_front_end_access_enabled'];
-    const function_exec_lables = [].concat(...generalAppLabels).concat(...['exec_result', 'trigger_type']).concat(...function_g_labels);
+    const function_g_labels = ['function_api_name', 'language', 'is_long_task', 'is_front_end_access_enabled', 'runtime'];
+    const function_exec_labels = [].concat(...generalAppLabels).concat(...['exec_result', 'trigger_type']).concat(...function_g_labels);
 
     const function_exec_total = new client.Counter({
         name: 'function_exec_total',
         help: 'Total number of function executions',
-        labelNames: function_exec_lables,
+        labelNames: function_exec_labels,
         registers: [registry]
     });
 
     const function_exec_duration_milliseconds_total = new client.Counter({
         name: 'function_exec_duration_milliseconds_total',
         help: 'Total time cost in milliseconds of function executions',
-        labelNames: function_exec_lables,
+        labelNames: function_exec_labels,
         registers: [registry]
     });
 
     const function_exec_duration_milliseconds_histogram = new client.Histogram({
         name: 'function_exec_duration_milliseconds_histogram',
         help: 'A histogram of latencies per execution',
-        labelNames: function_exec_lables,
+        labelNames: function_exec_labels,
         buckets: [100, 200, 300, 500, 1000, 1500, 2000, 4000, 8000, 10000, 30000, 60000, 300000, 600000, 900000, 3600000, 5400000, 7200000, 9000000],
         registers: [registry]
     });
@@ -76,7 +76,7 @@ function getAppMetrics(app_id) {
     const function_exec_duration_milliseconds_summary = new client.Summary({
         name: 'function_exec_duration_milliseconds_summary',
         help: 'A summary of latencies per execution',
-        labelNames: function_exec_lables,
+        labelNames: function_exec_labels,
         percentiles: [0.25, 0.5, 0.9, 0.95, 0.99, 0.999],
         registers: [registry]
 
@@ -145,7 +145,7 @@ function getAppMetrics(app_id) {
      * page metrics
      */
     const page_labels = ['page_api_name', 'builder_version', 'page_type'];
-    const page_query_result_lables = ['query_result', 'query_api_name'];
+    const page_query_result_labels = ['query_result', 'query_api_name'];
     const page_operate_labels = ['component_id', 'operate_type'];
 
     const page_load_count_total = new client.Counter({
@@ -236,21 +236,21 @@ function getAppMetrics(app_id) {
     const page_query_count_total = new client.Counter({
         name: 'page_query_count_total',
         help: 'Total number of page queries',
-        labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_lables),
+        labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_labels),
         registers: [registry]
     });
 
     const page_query_duration_milliseconds_total = new client.Counter({
         name: 'page_query_duration_milliseconds_total',
         help: 'Total time cost in milliseconds of page queries',
-        labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_lables),
+        labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_labels),
         registers: [registry]
     });
 
     const page_query_duration_milliseconds_summary = new client.Summary({
         name: 'page_query_duration_milliseconds_summary',
         help: 'A summary of page query durations',
-        labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_lables),
+        labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_labels),
         percentiles: [0.25, 0.5, 0.9, 0.95, 0.99, 0.999],
         registers: [registry]
     });
@@ -258,7 +258,7 @@ function getAppMetrics(app_id) {
     const page_query_duration_milliseconds_histogram = new client.Histogram({
         name: 'page_query_duration_milliseconds_histogram',
         help: 'A histogram of page query durations',
-        labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_lables),
+        labelNames: [].concat(...generalAppLabels).concat(...page_labels).concat(...page_query_result_labels),
         buckets: [50, 100, 200, 300, 500, 1000, 1500, 2000, 4000, 8000, 10000, 12000, 16000, 20000, 30000],
         registers: [registry]
     });

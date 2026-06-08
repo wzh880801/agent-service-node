@@ -34,6 +34,8 @@ export class LogHelper {
 
     private serviceName: string = "my_service";
 
+    private currentLogFile: string = "";
+
     constructor(trace_id?: string | undefined | null) {
         this.traceId = uuidv4().replace(/-/g, '');
         if (trace_id) {
@@ -68,19 +70,37 @@ export class LogHelper {
 
     private getLogFileName(): string {
         var currentDate = this.getBJDate();
-        var number = this.getFileNumber();
 
+        // 如果缓存的文件名日期匹配，直接检查大小，避免频繁 readdirSync
+        if (this.currentLogFile && this.currentLogFile.startsWith(this.logPath + "/" + currentDate)) {
+            try {
+                var stats = fs.statSync(this.currentLogFile);
+                if (stats.size < 8 * 1024 * 1024) {
+                    return this.currentLogFile;
+                }
+                // 文件满了，编号+1
+                var number = parseInt(this.currentLogFile.match(/-(\d{3})\.txt$/)![1], 10) + 1;
+                this.currentLogFile = this.logPath + "/" + currentDate + "-" + String(number).padStart(3, '0') + ".txt";
+                return this.currentLogFile;
+            } catch (e) {
+                // 文件被删除等情况，重置缓存
+                this.currentLogFile = "";
+            }
+        }
+
+        // 没有缓存或日期变了，重新计算
+        var number = this.getFileNumber();
         var log_file = this.logPath + "/" + currentDate + "-" + String(number).padStart(3, '0') + ".txt";
 
-        // 检查文件大小
         if (fs.existsSync(log_file)) {
             var stats = fs.statSync(log_file);
             if (stats.size >= 8 * 1024 * 1024) { // 8MB
                 number++;
-                return this.logPath + "/" + currentDate + "-" + String(number).padStart(3, '0') + ".txt";
+                log_file = this.logPath + "/" + currentDate + "-" + String(number).padStart(3, '0') + ".txt";
             }
         }
 
+        this.currentLogFile = log_file;
         return log_file;
     }
 
@@ -160,6 +180,7 @@ export class LogHelper {
     setPath(path: string): this {
         if (path) {
             this.logPath = path;
+            this.currentLogFile = "";
         }
         if (!fs.existsSync(this.logPath)) {
             fs.mkdirSync(this.logPath, { recursive: true });
@@ -249,7 +270,7 @@ export class LogHelper {
             if (!this.isSingleAppendMode) {
                 this.__initMetadatas = {
                     ...this.__initMetadatas,
-                    ...labels
+                    ...metadatas
                 };
             }
         }

@@ -1,20 +1,103 @@
 # agent-service-node
 
-  订阅应用指标上报事件，使用 Prometheus SDK 进行指标处理，暴露 metrics http endpoint 以便让 Prometheus server 抓取指标数据
+- 订阅 aPaaS 应用的上报事件（指标、事件、日志），使用 Prometheus SDK 进行指标处理，暴露 metrics HTTP endpoint 以便让 Prometheus server 抓取指标数据
 
-  部署方式：
+## 架构说明
 
-一、 源码部署
+```
+                                 ┌─────────────────┐
+                                 │   飞书开放平台   │
+                                 │  (apaas 事件)   │
+                                 └────────┬────────┘
+                                          │ WS 长连接
+                                          ↓
+                                 ┌─────────────────┐
+                                 │   ws-client.js  │
+                                 │    (事件接收)    │
+                                 └────────┬────────┘
+                                          │ 写入 Bull 队列
+                                          ↓
+                                 ┌─────────────────┐
+                                 │      Redis      │
+                                 │   (Bull 队列)   │
+                                 └────────┬────────┘
+                                          │ 消费
+                                          ↓
+                                 ┌─────────────────┐
+                                 │  job-handler.js │
+                                 │   (队列处理)    │
+                                 └────────┬────────┘
+                                          │
+                    ┌─────────────────────┼─────────────────────┐
+                    │                     │                     │
+                    ↓                     ↓                     ↓
+           ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+           │  apaas_metrics  │   │  apaas_events   │   │   apaas_logs    │
+           │  → Prometheus   │   │  → Loki/日志    │   │  → Loki/日志    │
+           │  (Counter/Gauge/│   │  (仅记录日志)   │   │  (分级记录)     │
+           │   Histogram/    │   │                 │   │                 │
+           │   Summary)      │   │                 │   │                 │
+           └────────┬────────┘   └─────────────────┘   └─────────────────┘
+                    │
+                    │ /metrics
+                    ↓
+           ┌─────────────────┐
+           │  Prometheus     │
+           │  Server         │
+           └─────────────────┘
+```
+
+服务由 3 个进程组成：
+- **ws-client.js**：通过 WebSocket 长连接接收飞书开放平台事件，转存到 Bull 队列
+- **job-handler.js**：消费队列，处理事件并暴露 HTTP endpoint 供 Prometheus 抓取
+- **bull-board.js**（可选）：Bull 队列的可视化管理面板
+
+### 订阅的事件类型
+
+ws-client.js 订阅了 3 类 aPaaS 应用上报事件：
+
+| 事件类型 | Job 队列 | job-handler.js 处理方式 |
+|---------|---------|------------------------|
+| `apaas.application.metric.reported_v1` | `apaas_metrics` | 解析为 Prometheus Counter/Gauge/Histogram/Summary 指标 |
+| `apaas.application.event.reported_v1` | `apaas_events` | 记录到 Loki/本地日志（不生成 Prometheus 指标） |
+| `apaas.application.log.reported_v1` | `apaas_logs` | 按 `error`/`warn`/`debug`/`info` 级别分级记录到日志 |
+
+## 运行模式
+
+| 模式 | 适用场景 | Metrics Endpoint |
+|------|---------|------------------|
+| `SINGLE_APP_MODE`（默认） | 1 个 App 接收 1 个 aPaaS 应用的指标 | `/metrics` |
+| `DUAL_APP_MODE` | 1 个 App 接收 N 个 aPaaS 应用的指标（多租户） | `/:tenant_id_namespace/metrics` + `/agent/metrics` |
+
+## HTTP 端点
+
+| 端点 | 说明 | 适用模式 |
+|------|------|---------|
+| `GET /metrics` | 聚合指标 | SINGLE_APP_MODE |
+| `GET /:app_id/metrics` | 按应用隔离的指标 | DUAL_APP_MODE |
+| `GET /agent/metrics` | Agent 自身 scrape 指标 | DUAL_APP_MODE |
+| `GET /health` | 健康检查 | 全部 |
+
+## 依赖
+
+- Node.js >= 18
+- Redis（Bull 队列存储）
+
+## 部署方式
+
+### 一、源码部署
+
 1. clone 代码
 2. 安装 npm 依赖
-进入到项目根目录，执行 `npm i`
+```bash
+cd agent-service-node
+npm i
+```
 3. 安装 pm2（可选）
 ```bash
 npm i pm2@latest -g
 ```
-4. 配置
-- 配置 redis、HTTP 端口号等信息
-通过环境变量方式配置
+4. 配置环境变量
 ```bash
 export METRICS_HTTP_PORT=33444
 export LOKI_API_URL=
@@ -24,27 +107,30 @@ export REDIS_CONN_URL=redis://127.0.0.1:6379/15
 export APP_ID=cli_a59a471e0a7fd00d
 export APP_SECRET=LOplEasQrxvmWDiqa************
 export RUN_MODE=SINGLE_APP_MODE
+
+# 可选
+export PROCESS_DEV_EVENTS=false   # 是否处理 dev 环境事件（默认 false，仅处理 online）
+export SAVE_RAW_EVENT=false       # 是否保存原始事件到日志
+export LOG_LEVEL=info             # SDK 日志级别: debug/info/warn/error
+
+# DUAL_APP_MODE 下配置 Prometheus 动态加载（可选）
+export PROM_CFG_FILE=/etc/prometheus/prometheus.yml
+export SCRAPE_HOST_PORT=172.28.10.10:33444
+export PROM_URL=http://172.28.10.8:9090
 ```
 5. 启动
 ```bash
-// 使用长连接接收开放平台事件，转存到 bull 队列
-node ./platform/ws.js
-
-// 消费队列，处理指标事件并暴露一个 /metrics endpoint 供 Prometheus server 爬取数据
-// 如果 RUN_MODE=DUAL_APP_MODE(1 个 App id 接收 N 个 apaas 应用的指标事件)，endpoint 是分开的，/:tenant_id_namespace/metrics
+# 方式一：直接启动
+node ./platform/ws-client.js
 node ./platform/job-handler.js
+node ./platform/bull-board.js   # 可选
 
-// 可选，队列的管理面板
-node ./platform/bull-board.js
-```
-或
-```bash
-// 需要先安装 pm2
-sudo chmod +x ./start.sh
+# 方式二：使用 pm2
+chmod +x ./start.sh
 ./start.sh
 ```
 
-二、docker 部署
+### 二、Docker 部署
 
 1. build docker image
 ```bash
@@ -52,5 +138,12 @@ docker build . -t agent-service-node
 ```
 2. run docker container
 ```bash
-docker run -d --name agent-service-node agent-service-node -p 33444:33444 -p 44445:44445 -e  REDIS_CONN_URL=redis://127.0.0.1:6379/15 -e LOKI_API_URL=<loki_url> -e LOKI_API_KEY=<loki_key>
+docker run -d --name agent-service-node \
+  -p 33444:33444 \
+  -p 44445:44445 \
+  -e REDIS_CONN_URL=redis://127.0.0.1:6379/15 \
+  -e LOKI_API_URL=<loki_url> \
+  -e LOKI_API_KEY=<loki_key> \
+  -e RUN_MODE=SINGLE_APP_MODE \
+  agent-service-node
 ```

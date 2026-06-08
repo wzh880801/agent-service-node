@@ -13,7 +13,12 @@ export interface IOApiMetricReceivedEvent {
 }
 
 export type MetricName =
-    'oapi_call_total' | 'oapi_call_duration_milliseconds_total' | 'oapi_call_duration_milliseconds_histogram' | 'oapi_call_duration_milliseconds_summary' | 'oapi_call_data_in_bytes_total' | 'oapi_call_data_out_bytes_total';
+    // OAPI metrics
+    'oapi_call_total' | 'oapi_call_duration_milliseconds_total' | 'oapi_call_duration_milliseconds_histogram' | 'oapi_call_duration_milliseconds_summary' | 'oapi_call_data_in_bytes_total' | 'oapi_call_data_out_bytes_total' |
+    // Function metrics
+    'function_exec_total' | 'function_exec_duration_milliseconds_total' | 'function_exec_duration_milliseconds_histogram' | 'function_exec_duration_milliseconds_summary' | 'function_exec_logs_total' | 'function_total' |
+    // Page metrics
+    'page_load_count_total' | 'page_load_duration_milliseconds_total' | 'page_load_duration_milliseconds_summary' | 'page_load_duration_milliseconds_histogram' | 'page_load_lcp_duration_milliseconds_total' | 'page_load_lcp_duration_milliseconds_summary' | 'page_load_lcp_duration_milliseconds_histogram' | 'page_load_fcp_duration_milliseconds_total' | 'page_load_fcp_duration_milliseconds_summary' | 'page_load_fcp_duration_milliseconds_histogram' | 'page_js_error_count_total' | 'page_query_count_total' | 'page_query_duration_milliseconds_total' | 'page_query_duration_milliseconds_summary' | 'page_query_duration_milliseconds_histogram' | 'page_operate_count_total';
 
 export interface IBaseMetric {
     name: MetricName,

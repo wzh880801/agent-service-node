@@ -49,7 +49,7 @@ async function enableSingleAppMode() {
     };
 
     let new_cfgs = [];
-    let is_has_dual_cfg = linq.from(raw_cfgs).count(x => isDualAppCfg(x)) > 0;
+    let is_has_dual_cfg = raw_cfgs.filter(x => isDualAppCfg(x)).length > 0;
 
     for (let cfg of raw_cfgs) {
         if (!isDualAppCfg(cfg)) {
@@ -57,7 +57,7 @@ async function enableSingleAppMode() {
         }
     }
 
-    const apaas_cfg = linq.from(new_cfgs).firstOrDefault(x => x.job_name === 'apaas');
+    const apaas_cfg = new_cfgs.find(x => x.job_name === 'apaas');
     if (!apaas_cfg) {
         new_cfgs.push(apaas);
     }
@@ -96,10 +96,10 @@ async function enableDualAppMode() {
         raw_cfgs = scrapeConfigs.toJSON();
     }
 
-    const new_cfgs = linq.from(raw_cfgs).where(x => x.job_name !== 'apaas').toArray();
+    const new_cfgs = raw_cfgs.filter(x => x.job_name !== 'apaas');
 
-    const is_has_apaas_cfg = linq.from(raw_cfgs).count(x => x.job_name === 'apaas') > 0;
-    const is_has_agent_cfg = linq.from(raw_cfgs).count(x => x.job_name === 'agent') > 0;
+    const is_has_apaas_cfg = raw_cfgs.filter(x => x.job_name === 'apaas').length > 0;
+    const is_has_agent_cfg = raw_cfgs.filter(x => x.job_name === 'agent').length > 0;
     if (!is_has_agent_cfg) {
         new_cfgs.push({
             job_name: 'agent',
@@ -139,7 +139,7 @@ async function enableDualAppMode() {
  */
 async function addDualAppConfig(tenant_id, namespace) {
     const new_cfg = buildNewAppCfg(tenant_id, namespace);
-    if (linq.from(_all_cfgs).firstOrDefault(x => x.job_name === new_cfg.job_name)) {
+    if (_all_cfgs.find(x => x.job_name === new_cfg.job_name)) {
         return;
     }
 
@@ -163,7 +163,7 @@ async function addDualAppConfig(tenant_id, namespace) {
         raw_cfgs = scrapeConfigs.toJSON();
     }
 
-    const is_cfg_exists = linq.from(raw_cfgs).count(x => x.job_name === new_cfg.job_name) > 0;
+    const is_cfg_exists = raw_cfgs.filter(x => x.job_name === new_cfg.job_name).length > 0;
 
     if (!is_cfg_exists) {
         raw_cfgs.push(new_cfg);
@@ -180,7 +180,7 @@ async function addDualAppConfig(tenant_id, namespace) {
 
         logger.info(`reload prometheus configuration completed.`);
 
-        if (!linq.from(_all_cfgs).firstOrDefault(x => x.job_name === new_cfg.job_name)) {
+        if (!_all_cfgs.find(x => x.job_name === new_cfg.job_name)) {
             _all_cfgs.push(new_cfg);
         }
     }
@@ -211,7 +211,7 @@ function buildNewAppCfg(tenant_id, namespace) {
  * @returns {boolean}
  */
 function isDualAppCfg(cfg) {
-    const regex = /\/(?<name>.+?)\/metrics/gm;
+    const regex = /\/(?<name>.+?)\/metrics/;
     if (cfg && cfg.metrics_path && cfg.job_name) {
         const m = regex.exec(cfg.metrics_path);
         if (m && m.groups['name'] && m.groups['name'] === cfg.job_name) {
