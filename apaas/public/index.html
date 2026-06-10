@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>aPaaS 配置管理</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f5f6f7; margin: 0; padding: 20px; color: #1f2329; }
+    .container { max-width: 800px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 32px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    h1 { font-size: 22px; margin: 0 0 24px; border-bottom: 1px solid #e5e6eb; padding-bottom: 16px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; color: #4e5969; }
+    input[type="text"], textarea { width: 100%; padding: 10px 12px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 14px; font-family: inherit; transition: border-color .2s; }
+    input[type="text"]:focus, textarea:focus { outline: none; border-color: #3370ff; }
+    textarea { min-height: 100px; resize: vertical; }
+    .hint { font-size: 12px; color: #86909c; margin-top: 4px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; font-size: 14px; font-weight: 500; border: none; border-radius: 4px; cursor: pointer; transition: opacity .2s; }
+    .btn-primary { background: #3370ff; color: #fff; }
+    .btn-secondary { background: #f2f3f5; color: #4e5969; margin-left: 10px; }
+    .btn-success { background: #00b42a; color: #fff; margin-left: 10px; }
+    .btn-danger { background: #f53f3f; color: #fff; margin-left: 10px; }
+    .btn:hover { opacity: .9; }
+    .actions { margin-top: 24px; display: flex; align-items: center; }
+    .toast { position: fixed; top: 20px; right: 20px; padding: 12px 18px; border-radius: 4px; color: #fff; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 1000; }
+    .toast.show { opacity: 1; }
+    .toast.success { background: #00b42a; }
+    .toast.error { background: #f53f3f; }
+    .section { margin-bottom: 24px; }
+    .section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #1f2329; }
+    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-left: 10px; }
+    .status-badge.running { background: #e8ffea; color: #00b42a; }
+    .status-badge.stopped { background: #ffece8; color: #f53f3f; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>aPaaS 配置管理</h1>
+
+    <div class="section">
+      <div class="section-title">连接信息</div>
+      <div class="form-group">
+        <label for="host">aPaaS Host</label>
+        <input type="text" id="host" placeholder="bits.feishu.cn">
+        <div class="hint">当前使用的 aPaaS Host，例如 bits.feishu.cn。</div>
+      </div>
+      <div class="form-group">
+        <label for="namespaces">App Namespaces（多个用英文逗号分隔）</label>
+        <input type="text" id="namespaces" placeholder="package_d771c2__c">
+        <div class="hint">当前可用的 App Namespace 列表。</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">认证信息</div>
+      <div class="form-group">
+        <label for="token">x-kunlun-token</label>
+        <input type="text" id="token" placeholder="请输入 x-kunlun-token">
+      </div>
+      <div class="form-group">
+        <label for="cookie">Cookie</label>
+        <textarea id="cookie" placeholder="请输入 Cookie 字符串"></textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">请求头配置</div>
+      <div class="form-group">
+        <label for="languageCode">x-kunlun-language-code</label>
+        <input type="text" id="languageCode" placeholder="2052">
+      </div>
+      <div class="form-group">
+        <label for="secChUa">sec-ch-ua</label>
+        <input type="text" id="secChUa" placeholder='"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"'>
+      </div>
+      <div class="form-group">
+        <label for="userAgent">User-Agent</label>
+        <input type="text" id="userAgent" placeholder="Mozilla/5.0 ...">
+      </div>
+      <div class="form-group">
+        <label for="acceptLanguage">Accept-Language</label>
+        <input type="text" id="acceptLanguage" placeholder="zh-CN,zh;q=0.9">
+      </div>
+      <div class="form-group">
+        <label for="origin">Origin</label>
+        <input type="text" id="origin" placeholder="https://bits.feishu.cn">
+        <div class="hint">留空则自动使用默认 Host 拼接。</div>
+      </div>
+      <div class="form-group">
+        <label for="referer">Referer</label>
+        <input type="text" id="referer" placeholder="https://bits.feishu.cn/ae/app_manage/...">
+        <div class="hint">留空则自动使用默认 Host 和第一个 Namespace 拼接。</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="saveBtn">保存配置</button>
+      <button class="btn btn-secondary" id="refreshBtn">刷新配置</button>
+    </div>
+
+    <div class="section" style="margin-top: 32px;">
+      <div class="section-title">定时任务 (Scheduler)</div>
+      <div class="form-group">
+        <label for="interval">同步间隔（格式如 10m, 30m, 1h，范围 10min~1h）</label>
+        <input type="text" id="interval" placeholder="10m" value="10m">
+        <div class="hint">每次同步窗口：from = 上次 to，to = 当前时间 - 5min。首次：from = 当前 - 10min，to = 当前 - 5min。自动翻页：pageSize=20，total &gt; 已获取数量时继续翻页。</div>
+      </div>
+      <div class="actions" style="margin-top: 12px;">
+        <button class="btn btn-success" id="startSchedulerBtn">启动 Scheduler</button>
+        <button class="btn btn-danger" id="stopSchedulerBtn">停止 Scheduler</button>
+        <span class="status-badge stopped" id="schedulerStatus">Stopped</span>
+      </div>
+    </div>
+
+    <div class="section" style="margin-top: 32px;">
+      <div class="section-title">API 说明</div>
+      <div style="font-size: 13px; color: #4e5969; line-height: 1.8;">
+        <p><strong>GET</strong> <code>/apaas/api/config</code> - 获取当前配置</p>
+        <p><strong>POST</strong> <code>/apaas/api/config</code> - 更新完整配置（Body: JSON）</p>
+        <p><strong>POST</strong> <code>/apaas/api/config/token</code> - 远程更新 token 和 cookie（Body: { token, cookie }）</p>
+        <p><strong>POST</strong> <code>/apaas/api/logs/:namespace/app_manage/list</code> - 应用管理日志列表</p>
+        <p><strong>GET</strong> <code>/apaas/api/logs/:namespace/app_manage/detail?logID=xxx</code> - 应用管理日志详情</p>
+        <p><strong>POST</strong> <code>/apaas/api/logs/:namespace/login/list</code> - 登录日志列表</p>
+        <p><strong>GET</strong> <code>/apaas/api/logs/:namespace/login/detail?logID=xxx</code> - 登录日志详情</p>
+        <p><strong>POST</strong> <code>/apaas/api/logs/:namespace/data_change/list</code> - 数据变更日志列表</p>
+        <p><strong>GET</strong> <code>/apaas/api/logs/:namespace/data_change/detail?logID=xxx</code> - 数据变更日志详情</p>
+        <p><strong>POST</strong> <code>/apaas/api/logs/:namespace/flow_runtime/list</code> - 流程运行时日志列表</p>
+        <p><strong>POST</strong> <code>/apaas/api/scheduler/start</code> - 启动定时同步</p>
+        <p><strong>POST</strong> <code>/apaas/api/scheduler/stop</code> - 停止定时同步</p>
+        <p><strong>GET</strong> <code>/apaas/api/scheduler/status</code> - 查询定时任务状态</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API_BASE = '/apaas';
+    const toast = document.getElementById('toast');
+
+    function showToast(msg, type = 'success') {
+      toast.textContent = msg;
+      toast.className = `toast ${type} show`;
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    async function loadConfig() {
+      try {
+        const res = await fetch(`${API_BASE}/api/config`);
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+        const c = json.data;
+        document.getElementById('host').value = c.host || '';
+        document.getElementById('namespaces').value = (c.namespaces || []).join(', ');
+        document.getElementById('token').value = c.token || '';
+        document.getElementById('cookie').value = c.cookie || '';
+        document.getElementById('languageCode').value = c.languageCode || '';
+        document.getElementById('secChUa').value = c.secChUa || '';
+        document.getElementById('userAgent').value = c.userAgent || '';
+        document.getElementById('acceptLanguage').value = c.acceptLanguage || '';
+        document.getElementById('origin').value = c.origin || '';
+        document.getElementById('referer').value = c.referer || '';
+      } catch (e) {
+        showToast('加载配置失败: ' + e.message, 'error');
+      }
+    }
+
+    async function saveConfig() {
+      try {
+        const config = {
+          host: document.getElementById('host').value.trim(),
+          namespaces: document.getElementById('namespaces').value.split(',').map(s => s.trim()).filter(Boolean),
+          token: document.getElementById('token').value.trim(),
+          cookie: document.getElementById('cookie').value.trim(),
+          languageCode: document.getElementById('languageCode').value.trim(),
+          secChUa: document.getElementById('secChUa').value.trim(),
+          userAgent: document.getElementById('userAgent').value.trim(),
+          acceptLanguage: document.getElementById('acceptLanguage').value.trim(),
+          origin: document.getElementById('origin').value.trim(),
+          referer: document.getElementById('referer').value.trim(),
+        };
+        const res = await fetch(`${API_BASE}/api/config`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config),
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+        showToast('保存成功');
+      } catch (e) {
+        showToast('保存失败: ' + e.message, 'error');
+      }
+    }
+
+    async function refreshSchedulerStatus() {
+      try {
+        const res = await fetch(`${API_BASE}/api/scheduler/status`);
+        const json = await res.json();
+        if (!json.success) return;
+        const badge = document.getElementById('schedulerStatus');
+        if (json.data.running) {
+          badge.textContent = 'Running';
+          badge.className = 'status-badge running';
+        } else {
+          badge.textContent = 'Stopped';
+          badge.className = 'status-badge stopped';
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    async function startScheduler() {
+      try {
+        const res = await fetch(`${API_BASE}/api/scheduler/start`, { method: 'POST' });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+        showToast(json.message);
+        refreshSchedulerStatus();
+      } catch (e) {
+        showToast('启动失败: ' + e.message, 'error');
+      }
+    }
+
+    async function stopScheduler() {
+      try {
+        const res = await fetch(`${API_BASE}/api/scheduler/stop`, { method: 'POST' });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+        showToast(json.message);
+        refreshSchedulerStatus();
+      } catch (e) {
+        showToast('停止失败: ' + e.message, 'error');
+      }
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', saveConfig);
+    document.getElementById('refreshBtn').addEventListener('click', loadConfig);
+    document.getElementById('startSchedulerBtn').addEventListener('click', startScheduler);
+    document.getElementById('stopSchedulerBtn').addEventListener('click', stopScheduler);
+
+    loadConfig();
+    refreshSchedulerStatus();
+    setInterval(refreshSchedulerStatus, 3000);
+  </script>
+</body>
+</html>

@@ -243,7 +243,7 @@ export class LogHelper {
     }
 
     /**
-     * 打印日志时，追加对应的 labels 和 metadatas，如果 调用了 useSingleAppendMode 再只生效一次
+     * 打印日志时，追加对应的 labels 和 metadatas，如果 调用了 useSingleAppendMode 则只生效一次
      * @param labels 
      * @param metadatas 
      * @returns 

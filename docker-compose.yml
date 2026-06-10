@@ -69,6 +69,20 @@ services:
 
       # # Prometheus 的地址，用来自动 reload 配置而无需手动重启 prometheus server，prometheus 需要启用 --web.enable-lifecycle
       # - PROM_URL=http://172.28.10.8:9090
+
+      # # aPaaS 日志同步间隔，范围 10min~1h，如 10m、30m、1h
+      # - APAAS_SYNC_INTERVAL=10m
+      # # aPaaS 日志同步指定 namespace（多个用逗号分隔），留空则使用 redis 配置中的 namespaces
+      # - APAAS_SYNC_NAMESPACES=
+
+      # # 日志文件保留天数，默认 7 天
+      # - LOG_FILE_SAVE_DAYS=7
+
+      # # 飞书自定义机器人 Webhook 地址，用于 aPaaS 凭证失效告警
+      # - FEISHU_BOT_WEBHOOK=https://open.feishu.cn/open-apis/bot/v2/hook/xxx
+      # # 飞书卡片模板 ID 和版本号
+      # - FEISHU_CARD_TEMPLATE_ID=AAqNgjDYP1C1w
+      # - FEISHU_CARD_TEMPLATE_VERSION=1.0.1
     volumes:
       - ./logs:/var/logs/agent-service-node
       # - ./prometheus/conf/prometheus.yml:/etc/prometheus/conf/prometheus.yml
